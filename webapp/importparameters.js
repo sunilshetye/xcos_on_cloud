@@ -425,14 +425,22 @@ AUTOMAT.prototype.importset = function AUTOMAT() {
 Bache.prototype.importset = function Bache() {
     /* TODO */
 }
-BACKLASH.prototype.importset = function BACKLASH() {
-    /* TODO */
+BACKLASH.prototype.importset = function BACKLASH() {	
+/*
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.ini = ary[0];
+	this.gap = ary[1];
+	this.zcr = ary[2];
+*/
 }
 BARXY.prototype.importset = function BARXY() {
     /* TODO */
 }
 BIGSOM_f.prototype.importset = function BIGSOM_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.sgn = ary
 }
 BITCLEAR.prototype.importset = function BITCLEAR() {
     /* TODO */
@@ -492,7 +500,11 @@ CLKINV_f.prototype.importset = function CLKINV_f() {
     /* TODO */
 }
 CLKOUTV_f.prototype.importset = function CLKOUTV_f() {
-    /* TODO */
+/*
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.prt = ary;
+*/
 }
 CLKSOM_f.prototype.importset = function CLKSOM_f() {
     /* TODO */
@@ -501,7 +513,11 @@ CLKSOMV_f.prototype.importset = function CLKSOMV_f() {
     /* TODO */
 }
 CLOCK_c.prototype.importset = function CLOCK_c() {
-    /* TODO */
+/*	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.dt = ary[0];
+	this.t0 = ary[1];
+*/
 }
 CLR.prototype.importset = function CLR() {
     /* TODO */
@@ -528,7 +544,10 @@ CONST.prototype.importset = function CONST() {
     /* TODO */
 }
 CONST_m.prototype.importset = function CONST_m() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.c = ary
+	this.displayParameter = this.c;
 }
 CONSTRAINT2_c.prototype.importset = function CONSTRAINT2_c() {
     /* TODO */
@@ -537,7 +556,11 @@ CONSTRAINT_c.prototype.importset = function CONSTRAINT_c() {
     /* TODO */
 }
 CONVERT.prototype.importset = function CONVERT() {
-    /* TODO */
+    	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.it = ary[0];
+	this.ot = ary[1];
+	this.np = ary[2];
 }
 COSBLK_f.prototype.importset = function COSBLK_f() {
     /* TODO */
@@ -567,7 +590,11 @@ CVS.prototype.importset = function CVS() {
     /* TODO */
 }
 DEADBAND.prototype.importset = function DEADBAND() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.maxp = ary[0];
+	this.minp = ary[1];
+	this.zeroc = ary[2];
 }
 DEBUG.prototype.importset = function DEBUG() {
     /* TODO */
@@ -582,7 +609,9 @@ DEMUX_f.prototype.importset = function DEMUX_f() {
     /* TODO */
 }
 DEMUX.prototype.importset = function DEMUX() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.out = ary
 }
 DERIV.prototype.importset = function DERIV() {
     /* TODO */
@@ -609,7 +638,10 @@ DLSS.prototype.importset = function DLSS() {
     /* TODO */
 }
 DOLLAR_f.prototype.importset = function DOLLAR_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.a = ary[0];
+	this.inh = ary[1];
 }
 DOLLAR.prototype.importset = function DOLLAR() {
     /* TODO */
@@ -618,7 +650,10 @@ DOLLAR_m.prototype.importset = function DOLLAR_m() {
     /* TODO */
 }
 EDGE_TRIGGER.prototype.importset = function EDGE_TRIGGER() {
-    /* TODO */
+/*	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.edge = ary;
+*/
 }
 EDGETRIGGER.prototype.importset = function EDGETRIGGER() {
     /* TODO */
@@ -627,22 +662,37 @@ ENDBLK.prototype.importset = function ENDBLK() {
     /* TODO */
 }
 END_c.prototype.importset = function END_c() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.tf = ary;
 }
 ESELECT_f.prototype.importset = function ESELECT_f() {
-    /* TODO */
+   	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.out = ary[0];
+	this.inh = ary[1];
+	this.nmod = ary[2];
 }
 EVTDLY_c.prototype.importset = function EVTDLY_c() {
-    /* TODO */
+   	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.dt = ary[0];
+	this.ff	 = ary[1];
+	this.displayParameter = this.dt;
 }
 EVTDLY_f.prototype.importset = function EVTDLY_f() {
     /* TODO */
 }
 EVTGEN_f.prototype.importset = function EVTGEN_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.tt = ary;
+	this.displayParameter = this.tt;
 }
 EVTVARDLY.prototype.importset = function EVTVARDLY() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.fir = ary;
 }
 EXPBLK_m.prototype.importset = function EXPBLK_m() {
     /* TODO */
@@ -724,16 +774,28 @@ Gyrator.prototype.importset = function Gyrator() {
     /* TODO */
 }
 HALT_f.prototype.importset = function HALT_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.n = ary;
 }
 HYSTHERESIS.prototype.importset = function HYSTHERESIS() {
-    /* TODO */
+/*	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.high_lim = ary[0];
+	this.low_lim = ary[1];
+	this.out_high = ary[2];
+	this.out_low = ary[3];
+	this.nzz = ary[4];
+*/
 }
 IdealTransformer.prototype.importset = function IdealTransformer() {
     /* TODO */
 }
 IFTHEL_f.prototype.importset = function IFTHEL_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.inh = ary[0];
+	this.nmod = ary[1];
 }
 Inductor.prototype.importset = function Inductor() {
     /* TODO */
@@ -745,7 +807,9 @@ INIMPL_f.prototype.importset = function INIMPL_f() {
     /* TODO */
 }
 INTEGRAL_f.prototype.importset = function INTEGRAL_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.x0 = ary;
 }
 INTEGRAL_m.prototype.importset = function INTEGRAL_m() {
     /* TODO */
@@ -766,7 +830,10 @@ ISELECT_m.prototype.importset = function ISELECT_m() {
     /* TODO */
 }
 JKFLIPFLOP.prototype.importset = function JKFLIPFLOP() {
-    /* TODO */
+/*	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.initialvalue = ary
+*/
 }
 LOGBLK_f.prototype.importset = function LOGBLK_f() {
     /* TODO */
@@ -847,7 +914,11 @@ MBLOCK.prototype.importset = function MBLOCK() {
     /* TODO */
 }
 MCLOCK_f.prototype.importset = function MCLOCK_f() {
-    /* TODO */
+/*	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.dt = ary[0];
+	this.nn = ary[1];
+*/
 }
 MFCLCK_f.prototype.importset = function MFCLCK_f() {
     /* TODO */
@@ -868,7 +939,9 @@ MUX_f.prototype.importset = function MUX_f() {
     /* TODO */
 }
 MUX.prototype.importset = function MUX() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.in = ary;
 }
 NEGTOPOS_f.prototype.importset = function NEGTOPOS_f() {
     /* TODO */
@@ -880,13 +953,18 @@ NPN.prototype.importset = function NPN() {
     /* TODO */
 }
 NRMSOM_f.prototype.importset = function NRMSOM_f() {
-    /* TODO */
+   	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.nin = ary;
 }
 OpAmp.prototype.importset = function OpAmp() {
     /* TODO */
 }
 OUT_f.prototype.importset = function OUT_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.prt = ary;
+	this.displayParameter = this.prt;
 }
 OUTIMPL_f.prototype.importset = function OUTIMPL_f() {
     /* TODO */
@@ -919,7 +997,9 @@ PROD_f.prototype.importset = function PROD_f() {
     /* TODO */
 }
 PRODUCT.prototype.importset = function PRODUCT() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.sgn = ary;
 }
 PuitsP.prototype.importset = function PuitsP() {
     /* TODO */
@@ -928,7 +1008,10 @@ PULSE_SC.prototype.importset = function PULSE_SC() {
     /* TODO */
 }
 QUANT_f.prototype.importset = function QUANT_f() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.pas = ary[0];
+	this.meth = ary[1];
 }
 RAMP.prototype.importset = function RAMP() {
     /* TODO */
@@ -937,7 +1020,10 @@ RAND_m.prototype.importset = function RAND_m() {
     /* TODO */
 }
 RATELIMITER.prototype.importset = function RATELIMITER() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.maxp = ary[0];
+	this.minp = ary[1];
 }
 READAU_f.prototype.importset = function READAU_f() {
     /* TODO */
@@ -952,7 +1038,11 @@ REGISTER.prototype.importset = function REGISTER() {
     /* TODO */
 }
 RELATIONALOP.prototype.importset = function RELATIONALOP() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.oprt = ary[0];
+	this.zcr = ary[1];
+	this.data = ary[2];
 }
 RELAY_f.prototype.importset = function RELAY_f() {
     /* TODO */
@@ -970,13 +1060,22 @@ ROOTCOEF.prototype.importset = function ROOTCOEF() {
     /* TODO */
 }
 SAMPHOLD_m.prototype.importset = function SAMPHOLD_m() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.it = ary;
 }
 SampleCLK.prototype.importset = function SampleCLK() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.frequ = ary[0];
+	this.offset = ary[1];
 }
 SATURATION.prototype.importset = function SATURATION() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.maxp = ary[0];
+	this.minp = ary[1];
+	this.zeroc = ary[2]
 }
 SAWTOOTH_f.prototype.importset = function SAWTOOTH_f() {
     /* TODO */
@@ -1054,7 +1153,11 @@ TEXT_f.prototype.importset = function TEXT_f() {
     /* TODO */
 }
 TIME_DELAY.prototype.importset = function TIME_DELAY() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.T = ary[0];
+	this.init = ary[1];
+	this.N = ary[2];
 }
 TIME_f.prototype.importset = function TIME_f() {
     /* TODO */
@@ -1075,7 +1178,11 @@ VanneReglante.prototype.importset = function VanneReglante() {
     /* TODO */
 }
 VARIABLE_DELAY.prototype.importset = function VARIABLE_DELAY() {
-    /* TODO */
+	var graphics = this.x.graphics;
+	var ary = getData(graphics.exprs);
+	this.T = ary[0];
+	this.init = ary[1];
+	this.N = ary[2];
 }
 VariableResistor.prototype.importset = function VariableResistor() {
     /* TODO */
