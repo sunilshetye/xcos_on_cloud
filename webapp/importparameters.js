@@ -976,7 +976,7 @@ LOGIC.prototype.importset = function LOGIC() {
 LOOKUP_f.prototype.importset = function LOOKUP_f() {
 	var model = this.x.model;
 	var par = getData(model.rpar);
-	this.graphpoints = par;
+	this.graphpoints = [ [par[0],par[4]] , [par[1],par[5]] , [par[2],par[6]] ,[par[3],par[7]] ];
 }
 MATBKSL.prototype.importset = function MATBKSL() {
     /* TODO */
