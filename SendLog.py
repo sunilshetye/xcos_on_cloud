@@ -14,6 +14,7 @@ from flask import request, Response, session, render_template, jsonify
 import flask_session
 import glob
 import json
+from lxml import etree
 import os
 from os.path import abspath, basename, dirname, exists, isfile, join, splitext
 import re
@@ -25,7 +26,6 @@ from threading import Timer
 from time import time
 import uuid
 from werkzeug import secure_filename
-from xml.dom import minidom
 
 from db_connection import connection
 import config
@@ -47,6 +47,12 @@ def remove(filename):
     except BaseException:
         print("could not remove", filename)
         return False
+
+
+def gettransform(filename):
+    xslt = etree.parse(filename)
+    transform = etree.XSLT(xslt)
+    return transform
 
 
 # change directory before using relative paths
@@ -91,6 +97,7 @@ BASEDIR = abspath('webapp')
 IMAGEDIR = join(BASEDIR, 'res_imgs')
 # display limit for long strings
 DISPLAY_LIMIT = 10
+XSLTFILE = join(BASEDIR, 'finalmodsheet.xsl')
 # handle scilab startup
 SCILAB_START = (
     "errcatch(-1,'stop');lines(0,120);clearfun('messagebox');"
@@ -831,11 +838,12 @@ def upload():
         # by using xml parser
         temp_file_xml_name = diagram.diagram_id + ".xml"
         file.save(temp_file_xml_name)
-        new_xml = minidom.parse(temp_file_xml_name)
+        new_xml = TRANSFORM(etree.parse(temp_file_xml_name))
+        print(type(new_xml))
 
         # to identify if we have to load or save to workspace or neither #0 if
         # neither TOWS_c or FROWSB found
-        blocks = new_xml.getElementsByTagName("BasicBlock")
+        blocks = new_xml.iter("BasicBlock")
         tk_is_present = False
         pattern = re.compile(r"<SplitBlock")
         for i, line in enumerate(open(temp_file_xml_name)):
@@ -859,7 +867,7 @@ def upload():
                     if list2[j] == list1[i] + 3:
                         count += 1
                         splitline.append(list1[i])
-            blocksplit = new_xml.getElementsByTagName("SplitBlock")
+            blocksplit = new_xml.iter("SplitBlock")
             block_ids = []  # this stores the id of split blocks
             for block in blocksplit:
                 if block.getAttribute("style") == "SPLIT_f":
@@ -874,7 +882,7 @@ def upload():
             for i in range(len(compsplit)):
                 finalsplit.append(block_ids[compsplit[i]])
 
-            blockcontrol = new_xml.getElementsByTagName("ControlPort")
+            blockcontrol = new_xml.iter("ControlPort")
             for block in blockcontrol:
                 for i in range(len(finalsplit)):
                     # match the lines with the parent of our spliblocks which
@@ -882,7 +890,7 @@ def upload():
                     if block.getAttribute("parent") == str(finalsplit[i]):
                         block.setAttribute('id', '-1')
 
-            blockcommand = new_xml.getElementsByTagName("CommandPort")
+            blockcommand = new_xml.iter("CommandPort")
             for block in blockcommand:
                 for i in range(len(finalsplit)):
                     if block.getAttribute("parent") == str(finalsplit[i]):
@@ -992,7 +1000,7 @@ def upload():
             return diagram.diagram_id
 
         # List to contain all affich blocks
-        blockaffich = new_xml.getElementsByTagName("AfficheBlock")
+        blockaffich = new_xml.iter("AfficheBlock")
         for block in blockaffich:
             if block.getAttribute("interfaceFunctionName") == "AFFICH_m":
                 diagram.workspace_counter = 4
@@ -1023,7 +1031,7 @@ def upload():
         # Hardcoded the real time scaling to 1.0 (i.e., no scaling of time
         # occurs) only if tkscale is present
         if tk_is_present:
-            for dia in new_xml.getElementsByTagName("XcosDiagram"):
+            for dia in new_xml.iter("XcosDiagram"):
                 dia.setAttribute('realTimeScaling', '1.0')
 
         # Save the changes made by parser
@@ -1681,6 +1689,8 @@ def open_example_file():
 
 if __name__ == '__main__':
     print('starting')
+    TRANSFORM = gettransform(XSLTFILE)
+    print('TRANSFORM=', TRANSFORM)
     os.chdir(SESSIONDIR)
     # Set server address from config
     http_server = WSGIServer(
