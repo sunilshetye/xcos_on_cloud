@@ -451,8 +451,8 @@ function main(container, outline, toolbar, sidebar, status) {
                     edgeSource = edgeSource.source;
                 }
 
-                var edgeSourceNodeName = edgeSource.value;
-                var targetNodeName = target.value;
+                var edgeSourceNodeName = edgeSource.value.constructor.name;
+                var targetNodeName = target.value.constructor.name;
 
                 // If the edge violates any of the port constraints, don't
                 // create the edge
@@ -602,8 +602,8 @@ function main(container, outline, toolbar, sidebar, status) {
                     edgeSource = edgeSource.source;
                 }
 
-                var sourceNodeName = source.value;
-                var edgeSourceNodeName = edgeSource.value;
+                var sourceNodeName = source.value.constructor.name;
+                var edgeSourceNodeName = edgeSource.value.constructor.name;
 
                 // If the edge violates any of the port constraints, don't
                 // create the edge
@@ -748,9 +748,9 @@ function main(container, outline, toolbar, sidebar, status) {
             edgeSource = edgeSource.source;
         }
 
-        var sourceNodeName = source.value;
-        var edgeSourceNodeName = edgeSource.value;
-        var targetNodeName = target.value;
+        var sourceNodeName = source.value.constructor.name;
+        var edgeSourceNodeName = edgeSource.value.constructor.name;
+        var targetNodeName = target.value.constructor.name;
 
         // For port-to-port edges with port constraint violations, don't create
         // that edge
