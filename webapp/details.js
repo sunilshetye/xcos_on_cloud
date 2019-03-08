@@ -402,6 +402,23 @@ function getData() {
     return dataArray;
 }
 
+function setData(dataObject, idx, value) {
+    var i = 0;
+    for (var key in dataObject) {
+        if (/^data/.test(key) && i++ == idx) {
+            if (typeof dataObject[key].value === "undefined") {
+                if (value != null && value % 1 == 0)
+                    value = value.toFixed(1);
+                dataObject[key].realPart = value;
+            } else {
+                dataObject[key].value = value;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 function isEmpty() {
     return !getData(arguments[0]).length;
 }
