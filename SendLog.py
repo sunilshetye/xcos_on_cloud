@@ -57,11 +57,13 @@ class MyWSGIHandler(WSGIHandler):
 
 
 class MyResponse(Response):
-    def set_cookie(self, *args, **kwargs):
-        cookie = dump_cookie(*args, **kwargs)
-        if kwargs.get('samesite', None) is None:
-            cookie = '%s; %s=%s' % (cookie,
-                                    'SameSite', config.SESSION_COOKIE_SAMESITE)
+    def set_cookie(self, key, value="", max_age=None, expires=None, path="/",
+                   domain=None, secure=False, httponly=False, samesite=None):
+        if samesite is None:
+            samesite = config.SESSION_COOKIE_SAMESITE
+        cookie = dump_cookie(
+            key, value=value, max_age=max_age, expires=expires, path=path,
+            domain=domain, secure=secure, httponly=httponly, samesite=samesite)
         self.headers.add('Set-Cookie', cookie)
 
 
