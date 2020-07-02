@@ -2185,6 +2185,7 @@ def clean_text(s):
 def get_example_file(example_file_id):
     filename = 'example.xcos'
     filepath = ''
+    example_id = 0
     data = db_query(config.QUERY_EXAMPLE_FILE_BY_ID, [example_file_id])
     for (filename, filepath, example_id) in data:
         pass
