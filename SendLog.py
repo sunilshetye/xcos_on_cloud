@@ -215,7 +215,7 @@ def is_versioned_file_modified():
             modified = True
 
     if modified:
-        app.jinja_env.cache.clear()
+        app.jinja_env().cache.clear()
 
     return modified
 
