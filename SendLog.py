@@ -240,8 +240,7 @@ evt = Event()
 
 
 def no_free_scilab_instance():
-    l1 = len(INSTANCES_1)
-    return l1 == 0
+    return not INSTANCES_1
 
 
 def too_many_scilab_instances():
@@ -409,15 +408,15 @@ def stop_instance(instance, createlogfile=False, removeinstance=True):
 
 
 def stop_scilab_instances():
-    if len(INSTANCES_1) > 0:
+    if INSTANCES_1:
         logger.info('stopping %s idle instances', len(INSTANCES_1))
-        while len(INSTANCES_1) > 0:
+        while INSTANCES_1:
             instance = INSTANCES_1.pop()
             stop_instance(instance, removeinstance=False)
 
-    if len(INSTANCES_2) > 0:
+    if INSTANCES_2:
         logger.info('stopping %s busy instances', len(INSTANCES_2))
-        while len(INSTANCES_2) > 0:
+        while INSTANCES_2:
             instance = INSTANCES_2.pop()
             stop_instance(instance, removeinstance=False)
 
@@ -433,11 +432,10 @@ def reap_scilab_instances():
             if instance.endtime < time():
                 remove_instances.append(instance)
 
-        count = len(remove_instances)
-        if count == 0:
+        if not remove_instances:
             continue
 
-        logger.info('removing %s stale instances', count)
+        logger.info('removing %s stale instances', len(remove_instances))
         for instance in remove_instances:
             base = instance.base
             if base is None:
@@ -2051,28 +2049,28 @@ def example_page():
 
         if example_file_id is not None:
             result = db_query(config.QUERY_ID_EXAMPLE_FILE, [example_file_id])
-            if len(result) > 0:
+            if result:
                 (category_id, book_id, chapter_id, example_id) = result[0]
                 example_file_id = int(example_file_id)
             else:
                 example_file_id = None
         elif example_id is not None:
             result = db_query(config.QUERY_ID_EXAMPLE, [example_id])
-            if len(result) > 0:
+            if result:
                 (category_id, book_id, chapter_id) = result[0]
                 example_id = int(example_id)
             else:
                 example_id = None
         elif chapter_id is not None:
             result = db_query(config.QUERY_ID_CHAPTER, [chapter_id])
-            if len(result) > 0:
+            if result:
                 (category_id, book_id) = result[0]
                 chapter_id = int(chapter_id)
             else:
                 chapter_id = None
         elif book_id is not None:
             result = db_query(config.QUERY_ID_BOOK, [book_id])
-            if len(result) > 0:
+            if result:
                 (category_id, ) = result[0]
                 book_id = int(book_id)
             else:
