@@ -67,12 +67,12 @@ class MyResponse(Response):
         self.headers.add('Set-Cookie', cookie)
 
 
-def makedirs(dirname, dirtype):
+def makedirs(dirname, __):
     if not exists(dirname):
         os.makedirs(dirname)
 
 
-def rmdir(dirname, dirtype):
+def rmdir(dirname, __):
     try:
         if exists(dirname):
             os.rmdir(dirname)
@@ -1908,8 +1908,8 @@ def static_file(path):
     return app.send_static_file(path)
 
 
-@app.route('/version-<version>/webapp/<path:path>')
-def versioned_static_file(version, path):
+@app.route('/version-<__version>/webapp/<path:path>')
+def versioned_static_file(__version, path):
     set_session()
     return app.send_static_file(path)
 
@@ -2117,7 +2117,7 @@ def example_page():
 @app.route('/examl<s>')
 @app.route('/exampe<s>')
 @app.route('/exampl<s>')
-def redirect_to_example_page(s):
+def redirect_to_example_page():
     set_session()
     qs = request.query_string.decode('utf-8', 'ignore')
     return flask.redirect(flask.url_for('example_page') + '?' + qs)
