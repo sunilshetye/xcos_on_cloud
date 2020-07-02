@@ -1926,7 +1926,7 @@ def endBlock(fig_id):
     diagram = get_diagram(get_request_id())
     if diagram is None:
         logger.warning('no diagram')
-        return
+        return "error"
 
     diagram.figure_list.remove(fig_id)
     return "done"
