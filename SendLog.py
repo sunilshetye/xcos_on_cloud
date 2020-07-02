@@ -1099,7 +1099,7 @@ def kill_scilab_with(proc, sgnl):
         logger.warning('could not kill invalid process with signal %s', sgnl)
         return True
 
-    for i in range(0, 20):
+    for __ in range(0, 20):
         gevent.sleep(LOOK_DELAY)
         if proc.poll() is not None:
             return True
@@ -1539,17 +1539,17 @@ def upload():
     tk_is_present = False
     pattern = re.compile(r"<SplitBlock")
     for i, line in enumerate(open(temp_file_xml_name)):
-        for match in re.finditer(pattern, line):
+        for __ in re.finditer(pattern, line):
             list1.append(i + 1)
     pattern1 = re.compile(r"<ControlPort")
     for i, line in enumerate(open(temp_file_xml_name)):
-        for match in re.finditer(pattern1, line):
+        for __ in re.finditer(pattern1, line):
             list2.append(i + 1)
     pattern2 = re.compile(r"<ImplicitInputPort")
     count1 = 0
 
     for i, line in enumerate(open(temp_file_xml_name)):
-        for match in re.finditer(pattern2, line):
+        for __ in re.finditer(pattern2, line):
             count1 += 1
     if count1 >= 1:
         splitline = []
@@ -1674,7 +1674,7 @@ def upload():
             pattern3 = re.compile(
                 "<ImplicitLink id=\"" + str(implitdetect[i]) + "\"")
             for i, line in enumerate(open(temp_file_xml_name)):
-                for match in re.finditer(pattern3, line):
+                for __ in re.finditer(pattern3, line):
                     list3.append(i - 1)
         with open(temp_file_xml_name, 'r+') as f:
             data = f.read().splitlines()
@@ -2267,7 +2267,7 @@ def return_prerequisite_file(filename, filepath, file_id, forindex):
 def download_example_file():
     set_session()
     example_file_id = request.args.get('efid')
-    (example_content, example_filename, example_id) = get_example_file(
+    (example_content, example_filename, __) = get_example_file(
         example_file_id)
     return Response(
         example_content,
