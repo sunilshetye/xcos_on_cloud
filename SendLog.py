@@ -67,17 +67,17 @@ class MyResponse(Response):
         self.headers.add('Set-Cookie', cookie)
 
 
-def makedirs(dirname, __):
-    if not exists(dirname):
-        os.makedirs(dirname)
+def makedirs(dname, __):
+    if not exists(dname):
+        os.makedirs(dname)
 
 
-def rmdir(dirname, __):
+def rmdir(dname, __):
     try:
-        if exists(dirname):
-            os.rmdir(dirname)
+        if exists(dname):
+            os.rmdir(dname)
     except Exception as e:
-        logger.warning('could not remove %s: %s', dirname, str(e))
+        logger.warning('could not remove %s: %s', dname, str(e))
 
 
 def remove(filename):
@@ -285,7 +285,7 @@ def prestart_scilab_instances():
         while too_many_scilab_instances():
             evt.wait()
 
-        for i in range(start_scilab_instances()):
+        for __ in range(start_scilab_instances()):
             instance = ScilabInstance()
             proc = instance.proc
             if proc is None:
@@ -650,7 +650,7 @@ def clean_sessions_thread():
             logger.warning('Exception in clean_sessions: %s', str(e))
 
 
-def get_diagram(xcos_file_id, remove=False):
+def get_diagram(xcos_file_id, removediagram=False):
     if not xcos_file_id:
         logger.warning('no id')
         return None
@@ -664,7 +664,7 @@ def get_diagram(xcos_file_id, remove=False):
 
     diagram = diagrams[xcos_file_id]
 
-    if remove:
+    if removediagram:
         diagrams[xcos_file_id] = Diagram()
 
     return diagram
@@ -682,7 +682,7 @@ def add_diagram():
     return (diagram, scripts, sessiondir)
 
 
-def get_script(script_id, scripts=None, remove=False):
+def get_script(script_id, scripts=None, removescript=False):
     if script_id is None:
         return None
     if not script_id:
@@ -698,7 +698,7 @@ def get_script(script_id, scripts=None, remove=False):
 
     script = scripts[script_id]
 
-    if remove:
+    if removescript:
         del scripts[script_id]
 
     return script
@@ -1025,7 +1025,7 @@ def getscriptoutput():
 def kill_script(script=None):
     '''Below route is called for stopping a running script file.'''
     if script is None:
-        script = get_script(get_script_id(), remove=True)
+        script = get_script(get_script_id(), removescript=True)
         if script is None:
             # when called with same script_id again or with incorrect script_id
             logger.warning('no script')
@@ -2301,7 +2301,7 @@ def open_example_file():
 # example page end     #################
 
 
-if __name__ == '__main__':
+def main():
     logger.info('starting')
     version_check()
     os.chdir(SESSIONDIR)
@@ -2331,3 +2331,7 @@ if __name__ == '__main__':
         clean_sessions(True)
         stop_scilab_instances()
         logger.info('exiting')
+
+
+if __name__ == '__main__':
+    main()
