@@ -1552,46 +1552,43 @@ def upload():
     if count1 >= 1:
         splitline = []
         count = 0
-        for i in range(len(list1)):
-            for j in range(len(list2)):
-                if list2[j] == list1[i] + 3:
+        for l1 in list1:
+            for l2 in list2:
+                if l2 == l1 + 3:
                     count += 1
-                    splitline.append(list1[i])
+                    splitline.append(l1)
         blocksplit = new_xml.getElementsByTagName("SplitBlock")
         block_ids = []  # this stores the id of split blocks
         for block in blocksplit:
             if block.getAttribute("style") == "SPLIT_f":
                 block_ids.append(int(block.getAttribute("id")))
-        compsplit = []
-        for i in range(len(splitline)):
-            for j in range(len(list1)):
-                if splitline[i] == list1[j]:
-                    compsplit.append(j)
 
         finalsplit = []
-        for i in range(len(compsplit)):
-            finalsplit.append(block_ids[compsplit[i]])
+        for sl in splitline:
+            for (j, l1) in enumerate(list1):
+                if sl == l1:
+                    finalsplit.append(block_ids[j])
 
         blockcontrol = new_xml.getElementsByTagName("ControlPort")
         for block in blockcontrol:
-            for i in range(len(finalsplit)):
+            for fs in finalsplit:
                 # match the lines with the parent of our spliblocks which
                 # we need to change
-                if block.getAttribute("parent") == str(finalsplit[i]):
+                if block.getAttribute("parent") == str(fs):
                     block.setAttribute('id', '-1')
 
         blockcommand = new_xml.getElementsByTagName("CommandPort")
         for block in blockcommand:
-            for i in range(len(finalsplit)):
-                if block.getAttribute("parent") == str(finalsplit[i]):
+            for fs in finalsplit:
+                if block.getAttribute("parent") == str(fs):
                     block.setAttribute('id', '-1')
 
         # here we take the ids of command controllink which we will search
         # and change
         finalchangeid = []
-        for i in range(len(finalsplit)):
-            finalchangeid.append(finalsplit[i] + 4)
-            finalchangeid.append(finalsplit[i] + 5)
+        for fs in finalsplit:
+            finalchangeid.append(fs + 4)
+            finalchangeid.append(fs + 5)
 
         # here we save the contents
         with open(temp_file_xml_name, 'w') as f:
@@ -1604,13 +1601,12 @@ def upload():
 
                 if "<CommandControlLink id=" in word:
                     temp_word = ""
-                    for i in range(len(finalchangeid)):
-                        fcid = str(finalchangeid[i])
+                    for fc in finalchangeid:
+                        fcid = str(fc)
                         srch = '<CommandControlLink id="' + fcid + '"'
                         if srch in word:
                             rplc = '<ImplicitLink id="' + fcid + '"'
                             temp_word = word.replace(srch, rplc)
-                            i += 1
                     if temp_word != "":
                         newline.append(temp_word)
                     else:
@@ -1626,8 +1622,8 @@ def upload():
         # return finalsplit
         with open(temp_file_xml_name, "w") as out_file:
             for line in buf:
-                for i in range(len(finalsplit)):
-                    fs = str(finalsplit[i])
+                for fsid in finalsplit:
+                    fs = str(fsid)
                     srch = ('<ControlPort connectable="0" '
                             'dataType="UNKNOW_TYPE" id="-1" ordering="1" '
                             'parent="' + fs + '"')
@@ -1635,7 +1631,7 @@ def upload():
                         line = (
                             '\t    <ImplicitInputPort connectable="0" '
                             'dataType="UNKNOW_TYPE" '
-                            'id="' + str(finalsplit[i] + 1) + '" '
+                            'id="' + str(fsid + 1) + '" '
                             'ordering="1" parent="' + fs + '" '
                             'style="ImplicitInputPort">\n'
                             '\t\t<mxGeometry as="geometry" height="10" '
@@ -1644,7 +1640,7 @@ def upload():
                             '\t    </ImplicitInputPort>\n'
                             '\t    <ImplicitOutputPort connectable="0" '
                             'dataType="UNKNOW_TYPE" '
-                            'id="' + str(finalsplit[i] + 2) + '" '
+                            'id="' + str(fsid + 2) + '" '
                             'ordering="1" parent="' + fs + '" '
                             'style="ImplicitOutputPort">\n'
                             '\t\t<mxGeometry as="geometry" height="10" '
@@ -1653,7 +1649,7 @@ def upload():
                             '\t    </ImplicitOutputPort>\n'
                             '\t    <ImplicitOutputPort connectable="0" '
                             'dataType="UNKNOW_TYPE" '
-                            'id="' + str(finalsplit[i] + 3) + '" '
+                            'id="' + str(fsid + 3) + '" '
                             'ordering="1" parent="' + fs + '" '
                             'style="ImplicitOutputPort">\n'
                             '\t\t<mxGeometry as="geometry" height="10" '
@@ -1665,12 +1661,12 @@ def upload():
         list3 = []
         implitdetect = []
         # return temp_file_xml_name
-        for i in range(len(finalsplit)):
-            implitdetect.append(finalsplit[i] + 5)
-            implitdetect.append(finalsplit[i] + 6)
-        for i in range(len(implitdetect)):
+        for fsid in finalsplit:
+            implitdetect.append(fsid + 5)
+            implitdetect.append(fsid + 6)
+        for idid in implitdetect:
             pattern3 = re.compile(
-                "<ImplicitLink id=\"" + str(implitdetect[i]) + "\"")
+                "<ImplicitLink id=\"" + str(idid) + "\"")
             for i, line in enumerate(open(temp_file_xml_name)):
                 for __ in re.finditer(pattern3, line):
                     list3.append(i - 1)
