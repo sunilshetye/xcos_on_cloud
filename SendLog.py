@@ -12,6 +12,7 @@ from gevent.pywsgi import WSGIHandler, WSGIServer
 patch_all(aggressive=False, subprocess=False)
 
 # pylint: disable=wrong-import-order
+# pylint: disable=wrong-import-position
 
 from datetime import datetime
 import fileinput
@@ -41,6 +42,7 @@ from xml.dom import minidom
 
 import config
 
+# pylint: enable=wrong-import-position
 # pylint: enable=wrong-import-order
 
 
