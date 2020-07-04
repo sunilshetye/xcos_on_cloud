@@ -85,8 +85,8 @@ def rmdir(dname, __):
     try:
         if exists(dname):
             os.rmdir(dname)
-    except OSError as e:
-        logger.warning('could not remove %s: %s', dname, e)
+    except OSError as ex:
+        logger.warning('could not remove %s: %s', dname, ex)
 
 
 def remove(filename):
@@ -103,8 +103,8 @@ def remove(filename):
     try:
         os.remove(filename)
         return True
-    except OSError as e:
-        logger.error('could not remove %s: %s', filename, e)
+    except OSError as ex:
+        logger.error('could not remove %s: %s', filename, ex)
         return False
 
 
@@ -149,19 +149,19 @@ app.config['ALLOWED_EXTENSIONS'] = set(['zcos', 'xcos', 'txt'])
 app.response_class = MyResponse
 cache.init_app(app)
 flask_session.Session(app)
-versioned = Versioned(app)
+VERSIONED = Versioned(app)
 
 logger = logging.getLogger('xcos')
 logger.setLevel(logging.DEBUG)
-handler = TimedRotatingFileHandler(LOGFILE,
+HANDLER = TimedRotatingFileHandler(LOGFILE,
                                    when='midnight',
                                    backupCount=config.LOGBACKUPCOUNT)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter(
+HANDLER.setLevel(logging.DEBUG)
+FORMATTER = logging.Formatter(
     fmt='%(asctime)s %(threadName)s %(levelname)s %(message)s',
     datefmt='%H:%M:%S')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+HANDLER.setFormatter(FORMATTER)
+logger.addHandler(HANDLER)
 
 # This is the path to the upload directory and values directory
 UPLOAD_FOLDER = 'uploads'  # to store xcos file
@@ -223,14 +223,14 @@ def is_versioned_file_modified():
     """ Check if the files have been modified since the last check """
     modified = False
 
-    for f in config.VERSIONED_FILES:
-        last_mtime = VERSIONED_FILES_MTIME.get(f, None)
-        mtime = os.stat(join(BASEDIR, f)).st_mtime
+    for f_n in config.VERSIONED_FILES:
+        last_mtime = VERSIONED_FILES_MTIME.get(f_n, None)
+        mtime = os.stat(join(BASEDIR, f_n)).st_mtime
         if last_mtime is None:
-            VERSIONED_FILES_MTIME[f] = mtime
+            VERSIONED_FILES_MTIME[f_n] = mtime
         elif mtime > last_mtime:
-            VERSIONED_FILES_MTIME[f] = mtime
-            logger.debug('%s modified', f)
+            VERSIONED_FILES_MTIME[f_n] = mtime
+            logger.debug('%s modified', f_n)
             modified = True
 
     if modified:
@@ -256,7 +256,7 @@ class ScilabInstance:
 
 INSTANCES_1 = []
 INSTANCES_2 = []
-evt = Event()
+EVT = Event()
 
 
 def no_free_scilab_instance():
@@ -266,18 +266,18 @@ def no_free_scilab_instance():
 
 def too_many_scilab_instances():
     """ Check if too many scilab instances are already running """
-    l1 = len(INSTANCES_1)
-    l2 = len(INSTANCES_2)
-    return l1 >= config.SCILAB_MIN_INSTANCES or \
-        l1 + l2 >= config.SCILAB_MAX_INSTANCES
+    len1 = len(INSTANCES_1)
+    len2 = len(INSTANCES_2)
+    return len1 >= config.SCILAB_MIN_INSTANCES or \
+        len1 + len2 >= config.SCILAB_MAX_INSTANCES
 
 
 def start_scilab_instances():
     """ Count how many scilab instances can be started """
-    l1 = len(INSTANCES_1)
-    l2 = len(INSTANCES_2)
+    len1 = len(INSTANCES_1)
+    len2 = len(INSTANCES_2)
     lssi = min(config.SCILAB_START_INSTANCES,
-               config.SCILAB_MAX_INSTANCES - l2) - l1
+               config.SCILAB_MAX_INSTANCES - len2) - len1
     if lssi > 0:
         logger.info('can start %s instances', lssi)
     return lssi
@@ -285,13 +285,13 @@ def start_scilab_instances():
 
 def print_scilab_instances():
     """ Print count of how many scilab instances are already running """
-    l1 = len(INSTANCES_1)
-    l2 = len(INSTANCES_2)
+    len1 = len(INSTANCES_1)
+    len2 = len(INSTANCES_2)
     msg = ''
-    if l1 > 0:
-        msg += ', free=' + str(l1)
-    if l2 > 0:
-        msg += ', in use=' + str(l2)
+    if len1 > 0:
+        msg += ', free=' + str(len1)
+    if len2 > 0:
+        msg += ', in use=' + str(len2)
     logger.info('instance count: %s', msg[2:])
 
 
@@ -312,7 +312,7 @@ def prestart_scilab_instances():
 
     while True:
         while too_many_scilab_instances():
-            evt.wait()
+            EVT.wait()
 
         for __ in range(start_scilab_instances()):
             instance = ScilabInstance()
@@ -368,7 +368,7 @@ def prestart_scilab_instances():
         print_scilab_instances()
 
         if too_many_scilab_instances():
-            evt.clear()
+            EVT.clear()
 
 
 def get_scilab_instance():
@@ -388,7 +388,7 @@ def get_scilab_instance():
                                proc.returncode)
                 FIRST_INSTANCE = True
                 if not too_many_scilab_instances():
-                    evt.set()
+                    EVT.set()
                     if no_free_scilab_instance():
                         gevent.sleep(4)
                 continue
@@ -396,7 +396,7 @@ def get_scilab_instance():
             INSTANCES_2.append(instance)
             print_scilab_instances()
             if not too_many_scilab_instances():
-                evt.set()
+                EVT.set()
 
             return instance
     except IndexError:
@@ -414,7 +414,7 @@ def remove_scilab_instance(instance):
         INSTANCES_2.remove(instance)
         print_scilab_instances()
         if not too_many_scilab_instances():
-            evt.set()
+            EVT.set()
     except ValueError:
         logger.error('could not find instance %s', instance)
 
@@ -608,10 +608,10 @@ class UserData:
     def getscriptcount(self):
         """ Function to get script id for the script being saved """
         with self.diagramlock:
-            rv = self.scriptcount
+            r_v = self.scriptcount
             self.scriptcount += 1
 
-        return str(rv)
+        return str(r_v)
 
     def clean(self):
         """ Clean the user details """
@@ -666,10 +666,10 @@ def init_session():
     if uid not in USER_DATA:
         USER_DATA[uid] = UserData()
 
-    ud = USER_DATA[uid]
-    ud.timestamp = time()
+    u_d = USER_DATA[uid]
+    u_d.timestamp = time()
 
-    sessiondir = ud.sessiondir
+    sessiondir = u_d.sessiondir
 
     makedirs(sessiondir, 'session')
     makedirs(join(sessiondir, UPLOAD_FOLDER), 'upload')
@@ -677,8 +677,8 @@ def init_session():
     makedirs(join(sessiondir, SCRIPT_FILES_FOLDER), 'script files')
     makedirs(join(sessiondir, WORKSPACE_FILES_FOLDER), 'workspace files')
 
-    return (ud.diagrams, ud.scripts, ud.getscriptcount, ud.scifile, sessiondir,
-            ud.diagramlock)
+    return (u_d.diagrams, u_d.scripts, u_d.getscriptcount, u_d.scifile,
+            sessiondir, u_d.diagramlock)
 
 
 def clean_sessions(final=False):
@@ -690,9 +690,9 @@ def clean_sessions(final=False):
     current_thread().name = 'Clean'
     totalcount = 0
     cleanuids = []
-    for uid, ud in USER_DATA.items():
+    for uid, u_d in USER_DATA.items():
         totalcount += 1
-        if final or time() - ud.timestamp > config.SESSIONTIMEOUT:
+        if final or time() - u_d.timestamp > config.SESSIONTIMEOUT:
             cleanuids.append(uid)
 
     if totalcount > 0:
@@ -700,8 +700,8 @@ def clean_sessions(final=False):
         for uid in cleanuids:
             current_thread().name = 'Clean-%s' % uid[:6]
             logger.info('cleaning')
-            ud = USER_DATA.pop(uid)
-            ud.clean()
+            u_d = USER_DATA.pop(uid)
+            u_d.clean()
 
 
 def clean_sessions_thread():
@@ -711,8 +711,8 @@ def clean_sessions_thread():
         gevent.sleep(config.SESSIONTIMEOUT / 2)
         try:
             clean_sessions()
-        except BaseException as e:
-            logger.warning('Exception in clean_sessions: %s', e)
+        except BaseException as ex:
+            logger.warning('Exception in clean_sessions: %s', ex)
 
 
 def get_diagram(xcos_file_id, removediagram=False):
@@ -814,8 +814,8 @@ def parse_line(line, lineno):
         # Current figure coordinates
         figure_id = line_words[2]
         return (figure_id, DATA)
-    except BaseException as e:
-        logger.error('%s while parsing %s on line %s', e, line, lineno)
+    except BaseException as ex:
+        logger.error('%s while parsing %s on line %s', ex, line, lineno)
         return (None, NOLINE)
 
 
@@ -853,7 +853,7 @@ def get_line_and_state(file, figure_list, lineno, incomplete_line):
     return (line, DATA)
 
 
-logfilefdrlock = RLock()
+LOGFILEFDRLOCK = RLock()
 LOGFILEFD = 123
 
 
@@ -875,7 +875,7 @@ def prestart_scilab():
     logfilefd, log_name = mkstemp(prefix=datetime.now().strftime(
         'scilab-log-%Y%m%d-'), suffix='.txt', dir=SESSIONDIR)
 
-    with logfilefdrlock:
+    with LOGFILEFDRLOCK:
         if logfilefd != LOGFILEFD:
             os.dup2(logfilefd, LOGFILEFD)
             os.close(logfilefd)
@@ -924,8 +924,8 @@ def is_unsafe_script(filename):
     Read file and check for system commands and return error if file contains
     system commands
     """
-    with open(filename, 'r') as f:
-        if not re.search(SYSTEM_COMMANDS, f.read()):
+    with open(filename, 'r') as f_h:
+        if not re.search(SYSTEM_COMMANDS, f_h.read()):
             return False
 
     # Delete saved file if system commands are encountered in that file
@@ -941,8 +941,8 @@ def uploadscript():
     file = request.files['file']
     if not file:
         msg = "Upload Error\n"
-        rv = {'msg': msg}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'msg': msg}
+        return Response(json.dumps(r_v), mimetype='application/json')
 
     fname = join(sessiondir, SCRIPT_FILES_FOLDER,
                  script.script_id + '_script.sce')
@@ -953,8 +953,8 @@ def uploadscript():
         msg = ("System calls are not allowed in script.\n"
                "Please edit the script again.\n")
         script.status = -1
-        rv = {'status': script.status, 'msg': msg}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'status': script.status, 'msg': msg}
+        return Response(json.dumps(r_v), mimetype='application/json')
 
     wfname = join(sessiondir, SCRIPT_FILES_FOLDER,
                   script.script_id + '_script_workspace.dat')
@@ -966,25 +966,25 @@ def uploadscript():
     if script.instance is None:
         msg = "Resource not available"
         script.status = -2
-        rv = {'status': script.status, 'msg': msg}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'status': script.status, 'msg': msg}
+        return Response(json.dumps(r_v), mimetype='application/json')
 
     msg = ''
     script.status = 1
-    rv = {'script_id': script.script_id, 'status': script.status, 'msg': msg}
-    return Response(json.dumps(rv), mimetype='application/json')
+    r_v = {'script_id': script.script_id, 'status': script.status, 'msg': msg}
+    return Response(json.dumps(r_v), mimetype='application/json')
 
 
-def clean_output(s):
+def clean_output(string):
     """ Handle whitespace and sequences in output """
-    s = re.sub(r'[\a\b\f\r\v]', r'', s)
+    string = re.sub(r'[\a\b\f\r\v]', r'', string)
     # https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_sequences
-    s = re.sub(r'\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]', r'', s)
-    s = re.sub(r'\t', r'    ', s)
-    s = re.sub(r' +(\n|$)', r'\n', s)
-    s = re.sub(r'\n+', r'\n', s)
-    s = re.sub(r'^\n', r'', s)
-    return s
+    string = re.sub(r'\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]', r'', string)
+    string = re.sub(r'\t', r'    ', string)
+    string = re.sub(r' +(\n|$)', r'\n', string)
+    string = re.sub(r'\n+', r'\n', string)
+    string = re.sub(r'^\n', r'', string)
+    return string
 
 
 @app.route('/getscriptoutput', methods=['POST'])
@@ -995,15 +995,15 @@ def getscriptoutput():
         # when called with same script_id again or with incorrect script_id
         logger.warning('no script')
         msg = "no script"
-        rv = {'msg': msg}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'msg': msg}
+        return Response(json.dumps(r_v), mimetype='application/json')
 
     instance = script.instance
     if instance is None:
         logger.warning('no instance')
         msg = "no instance"
-        rv = {'msg': msg}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'msg': msg}
+        return Response(json.dumps(r_v), mimetype='application/json')
 
     proc = instance.proc
 
@@ -1019,8 +1019,8 @@ def getscriptoutput():
             logger.warning('return code is %s', returncode)
             msg = 'Script stopped'
             script.status = -5
-            rv = {'status': script.status, 'msg': msg, 'output': output}
-            return Response(json.dumps(rv), mimetype='application/json')
+            r_v = {'status': script.status, 'msg': msg, 'output': output}
+            return Response(json.dumps(r_v), mimetype='application/json')
         if returncode > 0:
             logger.info('return code is %s', returncode)
             if output:
@@ -1032,8 +1032,8 @@ def getscriptoutput():
             msg = ("Check result window for details.\n"
                    "Please edit the script and execute again.\n")
             script.status = -3
-            rv = {'status': script.status, 'msg': msg, 'output': output}
-            return Response(json.dumps(rv), mimetype='application/json')
+            r_v = {'status': script.status, 'msg': msg, 'output': output}
+            return Response(json.dumps(r_v), mimetype='application/json')
 
         logger.info('workspace for %s saved in %s',
                     script.script_id, script.workspace_filename)
@@ -1047,8 +1047,8 @@ def getscriptoutput():
         if instance is None:
             msg = "Resource not available"
             script.status = -2
-            rv = {'status': script.status, 'msg': msg}
-            return Response(json.dumps(rv), mimetype='application/json')
+            r_v = {'status': script.status, 'msg': msg}
+            return Response(json.dumps(r_v), mimetype='application/json')
 
         proc = instance.proc
         listoutput = proc.communicate(timeout=10)[0]
@@ -1060,8 +1060,8 @@ def getscriptoutput():
             logger.warning('return code is %s', returncode)
             msg = 'Script stopped'
             script.status = -5
-            rv = {'status': script.status, 'msg': msg, 'output': listoutput}
-            return Response(json.dumps(rv), mimetype='application/json')
+            r_v = {'status': script.status, 'msg': msg, 'output': listoutput}
+            return Response(json.dumps(r_v), mimetype='application/json')
         if returncode > 0:
             logger.info('return code is %s', returncode)
             if listoutput:
@@ -1070,26 +1070,26 @@ def getscriptoutput():
         try:
             listoutput = listoutput.strip()
             variables = json.loads(listoutput)
-        except BaseException as e:
-            logger.warning('error while loading: %s: %s', listoutput, e)
+        except BaseException as ex:
+            logger.warning('error while loading: %s: %s', listoutput, ex)
             variables = []
 
-        rv = {'script_id': script.script_id, 'status': script.status,
-              'msg': msg, 'output': output, 'returncode': returncode,
-              'variables': variables}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'script_id': script.script_id, 'status': script.status,
+               'msg': msg, 'output': output, 'returncode': returncode,
+               'variables': variables}
+        return Response(json.dumps(r_v), mimetype='application/json')
     except subprocess.TimeoutExpired:
         kill_script(script)
         msg = 'Timeout'
         script.status = -4
-        rv = {'status': script.status, 'msg': msg}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'status': script.status, 'msg': msg}
+        return Response(json.dumps(r_v), mimetype='application/json')
     except UnicodeDecodeError:
         kill_script(script)
         msg = 'Unicode Decode Error'
         script.status = -6
-        rv = {'status': script.status, 'msg': msg}
-        return Response(json.dumps(rv), mimetype='application/json')
+        r_v = {'status': script.status, 'msg': msg}
+        return Response(json.dumps(r_v), mimetype='application/json')
 
 
 @app.route('/stopscript', methods=['POST'])
@@ -1233,7 +1233,7 @@ def kill_scilab(diagram=None):
     if diagram.file_image != '':
         logger.warning('not removing %s', diagram.file_image)
 
-    stopDetailsThread(diagram)
+    stop_details_thread(diagram)
 
 
 def list_variables(filename):
@@ -1402,10 +1402,10 @@ def start_scilab():
             diagram.instance = None
             return "Empty diagram"
 
-        m = re.search(r'Fatal error: exception Failure\("([^"]*)"\)',
-                      scilab_out)
-        if m:
-            msg = 'modelica error: ' + m.group(1)
+        m_e = re.search(r'Fatal error: exception Failure\("([^"]*)"\)',
+                        scilab_out)
+        if m_e:
+            msg = 'modelica error: ' + m_e.group(1)
             remove_scilab_instance(diagram.instance)
             diagram.instance = None
             return msg
@@ -1539,7 +1539,7 @@ def event_stream():
     yield "event: DONE\ndata: None\n\n"
 
 
-def AppendtoTKfile(diagram):
+def append_to_tk_file(diagram):
     """ Function which appends the updated (new) value to the file """
     starttime = diagram.tk_starttime
 
@@ -1548,31 +1548,31 @@ def AppendtoTKfile(diagram):
                      diagram.diagram_id + "_tk" + str(i + 1) + ".txt")
 
         # append data to the tk.txt
-        with open(fname, 'a') as w:
+        with open(fname, 'a') as f_h:
             while time() > starttime + \
                     diagram.tk_times[i] + diagram.tk_deltatimes[i]:
                 # update the time
                 diagram.tk_times[i] += diagram.tk_deltatimes[i]
-                w.write('%10.3E %10.3E\n' %
-                        (diagram.tk_times[i], diagram.tk_values[i]))
+                f_h.write('%10.3E %10.3E\n' %
+                          (diagram.tk_times[i], diagram.tk_values[i]))
 
 
-def getDetailsThread(diagram):
+def get_details_thread(diagram):
     """ Function which makes the initialisation of thread """
     while diagram.tkbool:
-        AppendtoTKfile(diagram)
+        append_to_tk_file(diagram)
         gevent.sleep(0.1)
 
 
-def stopDetailsThread(diagram):
+def stop_details_thread(diagram):
     """ Stop the details thread and clean up the files """
     diagram.tkbool = False  # stops the thread
     gevent.sleep(LOOK_DELAY)
     fname = join(diagram.sessiondir, VALUES_FOLDER,
                  diagram.diagram_id + "_*")
-    for fn in glob.glob(fname):
+    for f_n in glob.glob(fname):
         # deletes all files created under the 'diagram_id' name
-        remove(fn)
+        remove(f_n)
 
 
 @app.route('/upload', methods=['POST'])
@@ -1620,11 +1620,11 @@ def upload():
     if count1 >= 1:
         splitline = []
         count = 0
-        for l1 in list1:
-            for l2 in list2:
-                if l2 == l1 + 3:
+        for l_1 in list1:
+            for l_2 in list2:
+                if l_2 == l_1 + 3:
                     count += 1
-                    splitline.append(l1)
+                    splitline.append(l_1)
         blocksplit = new_xml.getElementsByTagName("SplitBlock")
         block_ids = []  # this stores the id of split blocks
         for block in blocksplit:
@@ -1632,45 +1632,45 @@ def upload():
                 block_ids.append(int(block.getAttribute("id")))
 
         finalsplit = []
-        for sl in splitline:
-            for (j, l1) in enumerate(list1):
-                if sl == l1:
+        for s_l in splitline:
+            for (j, l_1) in enumerate(list1):
+                if s_l == l_1:
                     finalsplit.append(block_ids[j])
 
         blockcontrol = new_xml.getElementsByTagName("ControlPort")
         for block in blockcontrol:
-            for fs in finalsplit:
+            for f_s in finalsplit:
                 # match the lines with the parent of our spliblocks which
                 # we need to change
-                if block.getAttribute("parent") == str(fs):
+                if block.getAttribute("parent") == str(f_s):
                     block.setAttribute('id', '-1')
 
         blockcommand = new_xml.getElementsByTagName("CommandPort")
         for block in blockcommand:
-            for fs in finalsplit:
-                if block.getAttribute("parent") == str(fs):
+            for f_s in finalsplit:
+                if block.getAttribute("parent") == str(f_s):
                     block.setAttribute('id', '-1')
 
         # here we take the ids of command controllink which we will search
         # and change
         finalchangeid = []
-        for fs in finalsplit:
-            finalchangeid.append(fs + 4)
-            finalchangeid.append(fs + 5)
+        for f_s in finalsplit:
+            finalchangeid.append(f_s + 4)
+            finalchangeid.append(f_s + 5)
 
         # here we save the contents
-        with open(temp_file_xml_name, 'w') as f:
-            f.write(new_xml.toxml())
+        with open(temp_file_xml_name, 'w') as f_h:
+            f_h.write(new_xml.toxml())
 
-        with open(temp_file_xml_name, "r") as f:
+        with open(temp_file_xml_name, "r") as f_h:
             newline = []
             i = 0
-            for word in f.readlines():
+            for word in f_h.readlines():
 
                 if "<CommandControlLink id=" in word:
                     temp_word = ""
-                    for fc in finalchangeid:
-                        fcid = str(fc)
+                    for f_c in finalchangeid:
+                        fcid = str(f_c)
                         srch = '<CommandControlLink id="' + fcid + '"'
                         if srch in word:
                             rplc = '<ImplicitLink id="' + fcid + '"'
@@ -1681,9 +1681,9 @@ def upload():
                         newline.append(word)
                 else:
                     newline.append(word)
-        with open(temp_file_xml_name, "w") as f:
+        with open(temp_file_xml_name, "w") as f_h:
             for line in newline:
-                f.writelines(line)
+                f_h.writelines(line)
         with open(temp_file_xml_name, "r") as in_file:
             buf = in_file.readlines()
         # length=len(finalsplit)
@@ -1691,16 +1691,16 @@ def upload():
         with open(temp_file_xml_name, "w") as out_file:
             for line in buf:
                 for fsid in finalsplit:
-                    fs = str(fsid)
+                    f_s = str(fsid)
                     srch = ('<ControlPort connectable="0" '
                             'dataType="UNKNOW_TYPE" id="-1" ordering="1" '
-                            'parent="' + fs + '"')
+                            'parent="' + f_s + '"')
                     if srch in line:
                         line = (
                             '\t    <ImplicitInputPort connectable="0" '
                             'dataType="UNKNOW_TYPE" '
                             'id="' + str(fsid + 1) + '" '
-                            'ordering="1" parent="' + fs + '" '
+                            'ordering="1" parent="' + f_s + '" '
                             'style="ImplicitInputPort">\n'
                             '\t\t<mxGeometry as="geometry" height="10" '
                             'relative="1" width="10" y="0.5000">\n'
@@ -1709,7 +1709,7 @@ def upload():
                             '\t    <ImplicitOutputPort connectable="0" '
                             'dataType="UNKNOW_TYPE" '
                             'id="' + str(fsid + 2) + '" '
-                            'ordering="1" parent="' + fs + '" '
+                            'ordering="1" parent="' + f_s + '" '
                             'style="ImplicitOutputPort">\n'
                             '\t\t<mxGeometry as="geometry" height="10" '
                             'relative="1" width="10" y="0.5000">\n'
@@ -1718,7 +1718,7 @@ def upload():
                             '\t    <ImplicitOutputPort connectable="0" '
                             'dataType="UNKNOW_TYPE" '
                             'id="' + str(fsid + 3) + '" '
-                            'ordering="1" parent="' + fs + '" '
+                            'ordering="1" parent="' + f_s + '" '
                             'style="ImplicitOutputPort">\n'
                             '\t\t<mxGeometry as="geometry" height="10" '
                             'relative="1" width="10" y="0.5000">\n'
@@ -1738,14 +1738,14 @@ def upload():
             for i, line in enumerate(open(temp_file_xml_name)):
                 for __ in re.finditer(pattern3, line):
                     list3.append(i - 1)
-        with open(temp_file_xml_name, 'r+') as f:
-            data = f.read().splitlines()
+        with open(temp_file_xml_name, 'r+') as f_h:
+            data = f_h.read().splitlines()
             replace = list3
             for i in replace:
                 data[i] = '\t    </ImplicitLink>'
-            f.seek(0)
-            f.write('\n'.join(data))
-            f.truncate()
+            f_h.seek(0)
+            f_h.write('\n'.join(data))
+            f_h.truncate()
         fname = join(sessiondir, UPLOAD_FOLDER,
                      splitext(temp_file_xml_name)[0] + ".xcos")
         os.rename(temp_file_xml_name, fname)
@@ -1755,25 +1755,25 @@ def upload():
     # List to contain all affich blocks
     blockaffich = new_xml.getElementsByTagName("AfficheBlock")
     for block in blockaffich:
-        interfaceFunctionName = block.getAttribute("interfaceFunctionName")
-        if interfaceFunctionName == "AFFICH_m":
+        interface_function_name = block.getAttribute("interfaceFunctionName")
+        if interface_function_name == "AFFICH_m":
             diagram.workspace_counter = 4
 
     # List to contain all the block IDs of tkscales so that we can create
     # read blocks with these IDs
     block_id = []
     for block in blocks:
-        interfaceFunctionName = block.getAttribute("interfaceFunctionName")
-        if interfaceFunctionName == "TKSCALE":
+        interface_function_name = block.getAttribute("interfaceFunctionName")
+        if interface_function_name == "TKSCALE":
             block_id.append(block.getAttribute("id"))
             block.setAttribute('id', '-1')
             tk_is_present = True
             # Changed the ID of tkscales to -1 so that virtually the
             # tkscale blocks get disconnected from diagram at the backend
         # Taking workspace_counter 1 for TOWS_c and 2 for FROMWSB
-        elif interfaceFunctionName == "scifunc_block_m":
+        elif interface_function_name == "scifunc_block_m":
             diagram.workspace_counter = 5
-        elif interfaceFunctionName == "TOWS_c":
+        elif interface_function_name == "TOWS_c":
             if block.childNodes:
                 for node in block.childNodes:
                     if not isinstance(node, minidom.Element):
@@ -1782,20 +1782,20 @@ def upload():
                         continue
                     if node.childNodes is None:
                         continue
-                    childCount = 0
-                    for childChildNode in node.childNodes:
-                        if not isinstance(childChildNode, minidom.Element):
+                    child_count = 0
+                    for child_child_node in node.childNodes:
+                        if not isinstance(child_child_node, minidom.Element):
                             continue
-                        childCount += 1
-                        if childCount != 2:
+                        child_count += 1
+                        if child_count != 2:
                             continue
-                        value = childChildNode.getAttribute("value")
+                        value = child_child_node.getAttribute("value")
                         if value is not None:
                             diagram.save_variables.add(value)
                         break
             diagram.workspace_counter = 1
             flag1 = 1
-        elif interfaceFunctionName == "FROMWSB":
+        elif interface_function_name == "FROMWSB":
             diagram.workspace_counter = 2
             flag2 = 1
     if diagram.save_variables:
@@ -1810,8 +1810,8 @@ def upload():
             dia.setAttribute('realTimeScaling', '1.0')
 
     # Save the changes made by parser
-    with open(temp_file_xml_name, 'w') as f:
-        f.write(new_xml.toxml())
+    with open(temp_file_xml_name, 'w') as f_h:
+        f_h.write(new_xml.toxml())
 
     # In front of block tkscale printing the block corresponding to read
     # function and assigning corresponding values
@@ -1879,12 +1879,12 @@ def filenames():
     url = request.form['url']
     if url == '' or '.' in url or url[0] != '/' or url[-1] != '/':
         return "error"
-    filelist = [url + f for f in os.listdir(BASEDIR + url)]
+    filelist = [url + f_n for f_n in os.listdir(BASEDIR + url)]
     return Response(json.dumps(filelist), mimetype='application/json')
 
 
 @app.route('/UpdateTKfile', methods=['POST'])
-def UpdateTKfile():
+def update_tk_file():
     """ Method used to update the TK files """
     diagram = get_diagram(get_request_id())
     if diagram is None:
@@ -1920,47 +1920,47 @@ def UpdateTKfile():
             open(fname, "w").close()
             # create empty tk text files
         # starts the thread
-        Timer(0.1, getDetailsThread, [diagram]).start()
+        Timer(0.1, get_details_thread, [diagram]).start()
     elif line == "Stop":
         # at last the val.txt contains "Stop" indicating the ending process
         # stops the thread
-        stopDetailsThread(diagram)
+        stop_details_thread(diagram)
     else:
         tklist = line.split(',')
 
         for i in range(min(diagram.tk_count, len(tklist))):
-            tl = tklist[i].split('  ')
-            if len(tl) == 1 or tl[1] == '':
+            t_l = tklist[i].split('  ')
+            if len(t_l) == 1 or t_l[1] == '':
                 continue
-            diagram.tk_deltatimes[i] = float(tl[0])
-            diagram.tk_values[i] = float(tl[1])
+            diagram.tk_deltatimes[i] = float(t_l[0])
+            diagram.tk_values[i] = float(t_l[1])
     return ""
 
 
 @app.route('/downloadfile', methods=['POST'])
-def DownloadFile():
+def download_file():
     """ Route for download of binary and audio """
-    fn = request.form['path']
-    if fn == '' or fn[0] == '.' or '/' in fn:
-        logger.warning('downloadfile=%s', fn)
+    f_n = request.form['path']
+    if f_n == '' or f_n[0] == '.' or '/' in f_n:
+        logger.warning('downloadfile=%s', f_n)
         return "error"
     # check if audio file or binary file
-    if "audio" in fn:
+    if "audio" in f_n:
         mimetype = 'audio/basic'
     else:
         mimetype = 'application/octet-stream'
     return flask.send_from_directory(
-        SESSIONDIR, fn, as_attachment=True, mimetype=mimetype)
+        SESSIONDIR, f_n, as_attachment=True, mimetype=mimetype)
 
 
 @app.route('/deletefile', methods=['POST'])
-def DeleteFile():
+def delete_file():
     """ Route for deletion of binary and audio file """
-    fn = request.form['path']
-    if fn == '' or fn[0] == '.' or '/' in fn:
-        logger.warning('deletefile=%s', fn)
+    f_n = request.form['path']
+    if f_n == '' or f_n[0] == '.' or '/' in f_n:
+        logger.warning('deletefile=%s', f_n)
         return "error"
-    remove(fn)  # deleting the file
+    remove(f_n)  # deleting the file
     return "0"
 
 
@@ -1992,7 +1992,7 @@ def stop():
 
 
 @app.route('/endBlock/<fig_id>')
-def endBlock(fig_id):
+def end_block(fig_id):
     """ Route to end blocks with no Ending parameter """
     diagram = get_diagram(get_request_id())
     if diagram is None:
@@ -2027,17 +2027,17 @@ def internal_fun(internal_key):
     internal_data = config.INTERNAL[internal_key]
 
     cmd = ""
-    for f in internal_data['scriptfiles']:
-        scriptfile = join(ROOTDIR, f)
+    for f_n in internal_data['scriptfiles']:
+        scriptfile = join(ROOTDIR, f_n)
         cmd += "exec('%s');" % scriptfile
     file_name = join(sessiondir, internal_key + ".txt")
     function = internal_data['function']
     parameters = internal_data['parameters']
     if 'num' in parameters:
-        p = 's'
-        cmd += "%s=poly(0,'%s');" % (p, p)
-        p = 'z'
-        cmd += "%s=poly(0,'%s');" % (p, p)
+        poly = 's'
+        cmd += "%s=poly(0,'%s');" % (poly, poly)
+        poly = 'z'
+        cmd += "%s=poly(0,'%s');" % (poly, poly)
     cmd += "%s('%s'" % (function, file_name)
     for parameter in parameters:
         if parameter not in request.form:
@@ -2083,8 +2083,8 @@ def internal_fun(internal_key):
         logger.warning(msg)
         return jsonify({'msg': msg})
 
-    with open(file_name) as f:
-        data = f.read()  # Read the data into a variable
+    with open(file_name) as f_h:
+        data = f_h.read()  # Read the data into a variable
 
     remove(file_name)
 
@@ -2182,8 +2182,8 @@ def example_page():
                                example_id=example_id,
                                example_file=example_file,
                                example_file_id=example_file_id)
-    except BaseException as e:
-        return repr(e)
+    except BaseException as ex:
+        return repr(ex)
 
 
 @app.route('/ea<s>')
@@ -2195,8 +2195,8 @@ def example_page():
 def redirect_to_example_page():
     """ Support common typos """
     set_session()
-    qs = request.query_string.decode('utf-8', 'ignore')
-    return flask.redirect(flask.url_for('example_page') + '?' + qs)
+    q_s = request.query_string.decode('utf-8', 'ignore')
+    return flask.redirect(flask.url_for('example_page') + '?' + q_s)
 
 
 @app.route('/get_book', methods=['GET', 'POST'])
@@ -2207,8 +2207,8 @@ def ajax_get_book():
     try:
         book = db_query(config.QUERY_BOOK, [category_id])
         return jsonify(book)
-    except BaseException as e:
-        return repr(e)
+    except BaseException as ex:
+        return repr(ex)
 
 
 @app.route('/get_chapter', methods=['GET', 'POST'])
@@ -2219,8 +2219,8 @@ def ajax_get_chapter():
     try:
         chapter = db_query(config.QUERY_CHAPTER, [book_id])
         return jsonify(chapter)
-    except BaseException as e:
-        return repr(e)
+    except BaseException as ex:
+        return repr(ex)
 
 
 @app.route('/get_example', methods=['GET', 'POST'])
@@ -2231,8 +2231,8 @@ def ajax_get_example():
     try:
         example = db_query(config.QUERY_EXAMPLE, [chapter_id])
         return jsonify(example)
-    except BaseException as e:
-        return repr(e)
+    except BaseException as ex:
+        return repr(ex)
 
 
 @app.route('/get_example_file', methods=['GET', 'POST'])
@@ -2243,8 +2243,8 @@ def ajax_get_example_file():
     try:
         example_file = db_query(config.QUERY_EXAMPLE_FILE, [example_id])
         return jsonify(example_file)
-    except BaseException as e:
-        return repr(e)
+    except BaseException as ex:
+        return repr(ex)
 
 
 @app.route('/get_contributor_details', methods=['GET', 'POST'])
@@ -2255,13 +2255,13 @@ def ajax_get_contributor_details():
     try:
         details = db_query(config.QUERY_CONTRIBUTOR_DETAILS, [book_id])
         return jsonify(details)
-    except BaseException as e:
-        return repr(e)
+    except BaseException as ex:
+        return repr(ex)
 
 
-def clean_text(s):
+def clean_text(string):
     """ Handle whitespace """
-    return re.sub(r'[ \t]*[\r\n]+[ \t]*', r'', s)
+    return re.sub(r'[ \t]*[\r\n]+[ \t]*', r'', string)
 
 
 def get_example_file(example_file_id):
@@ -2276,36 +2276,36 @@ def get_example_file(example_file_id):
     if XCOSSOURCEDIR != '' and filepath != '':
         try:
             logger.info('reading %s from %s', filename, filepath)
-            with open(join(XCOSSOURCEDIR, filepath), 'r') as f:
-                text = clean_text(f.read())
+            with open(join(XCOSSOURCEDIR, filepath), 'r') as f_h:
+                text = clean_text(f_h.read())
                 return (text, filename, example_id)
-        except OSError as e:
-            logger.warning('Exception: %s', e)
+        except OSError as ex:
+            logger.warning('Exception: %s', ex)
 
     scilab_url = "https://scilab.in/download/file/" + example_file_id
     logger.info('downloading %s', scilab_url)
-    r = requests.get(scilab_url)
-    text = clean_text(r.text)
+    req = requests.get(scilab_url)
+    text = clean_text(req.text)
     return (text, filename, example_id)
 
 
-def clean_text_2(s, forindex):
+def clean_text_2(string, forindex):
     """ Handle whitespace """
-    s = re.sub(r'[\a\b\f\r\v]', r'', s)
-    s = re.sub(r'\t', r'    ', s)
-    s = re.sub(r' +(\n|$)', r'\n', s)
+    string = re.sub(r'[\a\b\f\r\v]', r'', string)
+    string = re.sub(r'\t', r'    ', string)
+    string = re.sub(r' +(\n|$)', r'\n', string)
     if forindex:
-        s = re.sub(r'\n+$', r'', s)
+        string = re.sub(r'\n+$', r'', string)
         # double each backslash
-        s = re.sub(r'\\', r'\\\\', s)
+        string = re.sub(r'\\', r'\\\\', string)
         # replace each newline with '\n'
-        s = re.sub(r'\n', r'\\n', s)
+        string = re.sub(r'\n', r'\\n', string)
     else:
-        s = re.sub(r'\n{2,}$', r'\n', s)
-    return s
+        string = re.sub(r'\n{2,}$', r'\n', string)
+    return string
 
 
-def get_prerequisite_file(file_id):
+def get_prerequisite(file_id):
     """ Return the file name and contents by example file id """
     filename = ''
     filepath = ''
@@ -2316,7 +2316,7 @@ def get_prerequisite_file(file_id):
     return return_prerequisite_file(filename, filepath, file_id, False)
 
 
-def get_prerequisite_file_by_example_id(example_id):
+def get_prerequisite_by_example(example_id):
     """ Return the file name and contents by example id """
     filename = ''
     filepath = ''
@@ -2336,16 +2336,16 @@ def return_prerequisite_file(filename, filepath, file_id, forindex):
     if XCOSSOURCEDIR != '' and filepath != '':
         try:
             logger.info('reading %s from %s', filename, filepath)
-            with open(join(XCOSSOURCEDIR, filepath), 'r') as f:
-                text = clean_text_2(f.read(), forindex)
+            with open(join(XCOSSOURCEDIR, filepath), 'r') as f_h:
+                text = clean_text_2(f_h.read(), forindex)
                 return (text, filename)
-        except OSError as e:
-            logger.warning('Exception: %s', e)
+        except OSError as ex:
+            logger.warning('Exception: %s', ex)
 
     scilab_url = "https://scilab.in/download/file/" + str(file_id)
     logger.info('downloading %s', scilab_url)
-    r = requests.get(scilab_url)
-    text = clean_text_2(r.text, forindex)
+    req = requests.get(scilab_url)
+    text = clean_text_2(req.text, forindex)
     return (text, filename)
 
 
@@ -2368,7 +2368,7 @@ def download_prerequisite_file():
     """ Download the prerequisite file """
     set_session()
     example_file_id = request.args.get('efid')
-    (prerequisite_content, prerequisite_filename) = get_prerequisite_file(
+    (prerequisite_content, prerequisite_filename) = get_prerequisite(
         example_file_id)
     return Response(
         prerequisite_content,
@@ -2386,7 +2386,7 @@ def open_example_file():
     (example_content, example_filename, example_id) = get_example_file(
         example_file_id)
     (prerequisite_content, prerequisite_filename) = \
-        get_prerequisite_file_by_example_id(str(example_id))
+        get_prerequisite_by_example(str(example_id))
     return render_template('index.html',
                            example_content=example_content,
                            example_filename=example_filename,
@@ -2416,8 +2416,8 @@ def main():
     logger.info('listening: %s', http_server)
     try:
         http_server.serve_forever()
-    except BaseException as e:
-        msg = repr(e)
+    except BaseException as ex:
+        msg = repr(ex)
         logger.error(msg)
         print(msg)
         gevent.kill(worker)
