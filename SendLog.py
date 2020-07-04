@@ -11,6 +11,8 @@ from gevent.pywsgi import WSGIHandler, WSGIServer
 
 patch_all(aggressive=False, subprocess=False)
 
+# pylint: disable=wrong-import-order
+
 from datetime import datetime
 import fileinput
 import flask
@@ -38,6 +40,8 @@ from werkzeug.http import dump_cookie
 from xml.dom import minidom
 
 import config
+
+# pylint: enable=wrong-import-order
 
 
 class MyWSGIHandler(WSGIHandler):
