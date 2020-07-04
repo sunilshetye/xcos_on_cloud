@@ -76,8 +76,8 @@ def rmdir(dname, __):
     try:
         if exists(dname):
             os.rmdir(dname)
-    except Exception as e:
-        logger.warning('could not remove %s: %s', dname, str(e))
+    except OSError as e:
+        logger.warning('could not remove %s: %s', dname, e)
 
 
 def remove(filename):
@@ -89,8 +89,8 @@ def remove(filename):
     try:
         os.remove(filename)
         return True
-    except BaseException:
-        logger.error('could not remove %s', filename)
+    except OSError as e:
+        logger.error('could not remove %s: %s', filename, e)
         return False
 
 
@@ -629,15 +629,13 @@ def clean_sessions(final=False):
         if final or time() - ud.timestamp > config.SESSIONTIMEOUT:
             cleanuids.append(uid)
 
-    logger.info('cleaning %s/%s sessions', len(cleanuids), totalcount)
-    for uid in cleanuids:
-        current_thread().name = 'Clean-%s' % uid[:6]
-        try:
+    if totalcount > 0:
+        logger.info('cleaning %s/%s sessions', len(cleanuids), totalcount)
+        for uid in cleanuids:
+            current_thread().name = 'Clean-%s' % uid[:6]
             logger.info('cleaning')
             ud = USER_DATA.pop(uid)
             ud.clean()
-        except Exception as e:
-            logger.warning('could not clean: %s', str(e))
 
 
 def clean_sessions_thread():
@@ -646,8 +644,8 @@ def clean_sessions_thread():
         gevent.sleep(config.SESSIONTIMEOUT / 2)
         try:
             clean_sessions()
-        except Exception as e:
-            logger.warning('Exception in clean_sessions: %s', str(e))
+        except BaseException as e:
+            logger.warning('Exception in clean_sessions: %s', e)
 
 
 def get_diagram(xcos_file_id, removediagram=False):
@@ -745,8 +743,8 @@ def parse_line(line, lineno):
         # Current figure coordinates
         figure_id = line_words[2]
         return (figure_id, DATA)
-    except Exception as e:
-        logger.error('%s while parsing %s on line %s', str(e), line, lineno)
+    except BaseException as e:
+        logger.error('%s while parsing %s on line %s', e, line, lineno)
         return (None, NOLINE)
 
 
@@ -999,8 +997,8 @@ def getscriptoutput():
         try:
             listoutput = listoutput.strip()
             variables = json.loads(listoutput)
-        except Exception as e:
-            logger.warning('error while loading: %s: %s', listoutput, str(e))
+        except BaseException as e:
+            logger.warning('error while loading: %s: %s', listoutput, e)
             variables = []
 
         rv = {'script_id': script.script_id, 'status': script.status,
@@ -2101,8 +2099,8 @@ def example_page():
                                example_id=example_id,
                                example_file=example_file,
                                example_file_id=example_file_id)
-    except Exception as e:
-        return str(e)
+    except BaseException as e:
+        return repr(e)
 
 
 @app.route('/ea<s>')
@@ -2124,8 +2122,8 @@ def ajax_get_book():
     try:
         book = db_query(config.QUERY_BOOK, [category_id])
         return jsonify(book)
-    except Exception as e:
-        return str(e)
+    except BaseException as e:
+        return repr(e)
 
 
 @app.route('/get_chapter', methods=['GET', 'POST'])
@@ -2135,8 +2133,8 @@ def ajax_get_chapter():
     try:
         chapter = db_query(config.QUERY_CHAPTER, [book_id])
         return jsonify(chapter)
-    except Exception as e:
-        return str(e)
+    except BaseException as e:
+        return repr(e)
 
 
 @app.route('/get_example', methods=['GET', 'POST'])
@@ -2146,8 +2144,8 @@ def ajax_get_example():
     try:
         example = db_query(config.QUERY_EXAMPLE, [chapter_id])
         return jsonify(example)
-    except Exception as e:
-        return str(e)
+    except BaseException as e:
+        return repr(e)
 
 
 @app.route('/get_example_file', methods=['GET', 'POST'])
@@ -2157,8 +2155,8 @@ def ajax_get_example_file():
     try:
         example_file = db_query(config.QUERY_EXAMPLE_FILE, [example_id])
         return jsonify(example_file)
-    except Exception as e:
-        return str(e)
+    except BaseException as e:
+        return repr(e)
 
 
 @app.route('/get_contributor_details', methods=['GET', 'POST'])
@@ -2168,8 +2166,8 @@ def ajax_get_contributor_details():
     try:
         details = db_query(config.QUERY_CONTRIBUTOR_DETAILS, [book_id])
         return jsonify(details)
-    except Exception as e:
-        return str(e)
+    except BaseException as e:
+        return repr(e)
 
 
 def clean_text(s):
@@ -2190,8 +2188,8 @@ def get_example_file(example_file_id):
             with open(join(XCOSSOURCEDIR, filepath), 'r') as f:
                 text = clean_text(f.read())
                 return (text, filename, example_id)
-        except Exception as e:
-            logger.warning('Exception: %s', str(e))
+        except OSError as e:
+            logger.warning('Exception: %s', e)
 
     scilab_url = "https://scilab.in/download/file/" + example_file_id
     logger.info('downloading %s', scilab_url)
@@ -2247,8 +2245,8 @@ def return_prerequisite_file(filename, filepath, file_id, forindex):
             with open(join(XCOSSOURCEDIR, filepath), 'r') as f:
                 text = clean_text_2(f.read(), forindex)
                 return (text, filename)
-        except Exception as e:
-            logger.warning('Exception: %s', str(e))
+        except OSError as e:
+            logger.warning('Exception: %s', e)
 
     scilab_url = "https://scilab.in/download/file/" + str(file_id)
     logger.info('downloading %s', scilab_url)
@@ -2321,10 +2319,9 @@ def main():
     try:
         http_server.serve_forever()
     except BaseException as e:
-        msg = str(e)
-        if msg:
-            logger.error(msg)
-            print(msg)
+        msg = repr(e)
+        logger.error(msg)
+        print(msg)
         gevent.kill(worker)
         gevent.kill(reaper)
         gevent.kill(cleaner)
