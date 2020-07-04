@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+"""
+Main program
+"""
 
 import gevent
 from gevent.event import Event
@@ -38,6 +41,8 @@ import config
 
 
 class MyWSGIHandler(WSGIHandler):
+    """ Class to change the format of the log line """
+
     def format_request(self):
         length = self.response_length or '-'
         if self.time_finish:
@@ -57,6 +62,8 @@ class MyWSGIHandler(WSGIHandler):
 
 
 class MyResponse(Response):
+    """ Class to add samesite to cookie if missing """
+
     def set_cookie(self, key, value="", max_age=None, expires=None, path="/",
                    domain=None, secure=False, httponly=False, samesite=None):
         if samesite is None:
@@ -68,11 +75,13 @@ class MyResponse(Response):
 
 
 def makedirs(dname, __):
+    """ Function to check and make directory """
     if not exists(dname):
         os.makedirs(dname)
 
 
 def rmdir(dname, __):
+    """ Function to check and remove directory """
     try:
         if exists(dname):
             os.rmdir(dname)
@@ -81,6 +90,11 @@ def rmdir(dname, __):
 
 
 def remove(filename):
+    """
+    Function to check and remove file
+
+    If REMOVEFILE is set, then the file is not removed
+    """
     if filename is None:
         return False
     if not config.REMOVEFILE:
@@ -187,6 +201,10 @@ VERSIONED_FILES_MTIME = {}
 
 
 def version_check():
+    """
+    Check if the files have been modified every VERSIONED_CHECK_INTERVAL
+    seconds
+    """
     global VERSIONED_CHECK_TIME
 
     modified = False
@@ -202,6 +220,7 @@ def version_check():
 
 
 def is_versioned_file_modified():
+    """ Check if the files have been modified since the last check """
     modified = False
 
     for f in config.VERSIONED_FILES:
@@ -221,6 +240,7 @@ def is_versioned_file_modified():
 
 
 class ScilabInstance:
+    """ Information of a scilab instance """
     proc = None
     log_name = None
     base = None
@@ -240,10 +260,12 @@ evt = Event()
 
 
 def no_free_scilab_instance():
+    """ Check if any scilab instance is free """
     return not INSTANCES_1
 
 
 def too_many_scilab_instances():
+    """ Check if too many scilab instances are already running """
     l1 = len(INSTANCES_1)
     l2 = len(INSTANCES_2)
     return l1 >= config.SCILAB_MIN_INSTANCES or \
@@ -251,6 +273,7 @@ def too_many_scilab_instances():
 
 
 def start_scilab_instances():
+    """ Count how many scilab instances can be started """
     l1 = len(INSTANCES_1)
     l2 = len(INSTANCES_2)
     lssi = min(config.SCILAB_START_INSTANCES,
@@ -261,6 +284,7 @@ def start_scilab_instances():
 
 
 def print_scilab_instances():
+    """ Print count of how many scilab instances are already running """
     l1 = len(INSTANCES_1)
     l2 = len(INSTANCES_2)
     msg = ''
@@ -275,6 +299,11 @@ FIRST_INSTANCE = True
 
 
 def prestart_scilab_instances():
+    """
+    Prestart scilab instances so that scilab startup time is saved
+
+    Prestarted scilab instances are kept in INSTANCES_1
+    """
     global FIRST_INSTANCE
 
     current_thread().name = 'PreStart'
@@ -343,6 +372,11 @@ def prestart_scilab_instances():
 
 
 def get_scilab_instance():
+    """
+    Get a free prestarted scilab instance from INSTANCES_1
+
+    That instance is moved from INSTANCES_1 to INSTANCES_2
+    """
     global FIRST_INSTANCE
 
     try:
@@ -371,6 +405,11 @@ def get_scilab_instance():
 
 
 def remove_scilab_instance(instance):
+    """
+    Remove a used scilab instance from INSTANCES_2
+
+    New instances may be started because of this removal
+    """
     try:
         INSTANCES_2.remove(instance)
         print_scilab_instances()
@@ -381,12 +420,14 @@ def remove_scilab_instance(instance):
 
 
 def stop_scilab_instance(base, createlogfile=False):
+    """ Remove the scilab instance from the base class """
     stop_instance(base.instance, createlogfile)
 
     base.instance = None
 
 
 def stop_instance(instance, createlogfile=False, removeinstance=True):
+    """ Stop and remove the scilab instance from the scilab instance class """
     if instance is None:
         logger.warning('no instance')
         return
@@ -408,6 +449,7 @@ def stop_instance(instance, createlogfile=False, removeinstance=True):
 
 
 def stop_scilab_instances():
+    """ Stop all scilab instances """
     if INSTANCES_1:
         logger.info('stopping %s idle instances', len(INSTANCES_1))
         while INSTANCES_1:
@@ -422,6 +464,7 @@ def stop_scilab_instances():
 
 
 def reap_scilab_instances():
+    """ Stop all stale scilab instances """
     current_thread().name = 'Reaper'
     while True:
         gevent.sleep(100)
@@ -453,6 +496,7 @@ def reap_scilab_instances():
 
 
 class Diagram:
+    """ Class to save diagram details """
     diagram_id = None
     # session dir
     sessiondir = None
@@ -486,6 +530,7 @@ class Diagram:
             self.instance, self.tkbool, self.figure_list)
 
     def clean(self):
+        """ Clean the diagram details """
         if self.instance is not None:
             kill_scilab(self)
             self.instance = None
@@ -501,6 +546,7 @@ class Diagram:
 
 
 class Script:
+    """ Class to save script details """
     script_id = None
     sessiondir = None
     filename = None
@@ -516,6 +562,7 @@ class Script:
                 self.workspace_filename)
 
     def clean(self):
+        """ Clean the script details """
         if self.instance is not None:
             kill_script(self)
             self.instance = None
@@ -528,16 +575,18 @@ class Script:
 
 
 class SciFile:
-    '''Variables used in sci-func block'''
+    """ Class to save instance details """
     instance = None
 
     def clean(self):
+        """ Clean the instance details """
         if self.instance is not None:
             kill_scifile(self)
             self.instance = None
 
 
 class UserData:
+    """ Class to save user details """
     sessiondir = None
     diagrams = None
     scripts = None
@@ -557,6 +606,7 @@ class UserData:
         self.timestamp = time()
 
     def getscriptcount(self):
+        """ Function to get script id for the script being saved """
         with self.diagramlock:
             rv = self.scriptcount
             self.scriptcount += 1
@@ -564,6 +614,7 @@ class UserData:
         return str(rv)
 
     def clean(self):
+        """ Clean the user details """
         for diagram in self.diagrams:
             diagram.clean()
         self.diagrams = None
@@ -589,6 +640,11 @@ class UserData:
 
 
 def set_session():
+    """
+    For the first time, add the uid to the session
+
+    Return the uid value from the session
+    """
     if 'uid' not in session:
         session['uid'] = str(uuid.uuid4())
 
@@ -600,6 +656,11 @@ def set_session():
 
 
 def init_session():
+    """
+    For the first time, keep the user details in the session map
+
+    Return the user details from the session map
+    """
     uid = set_session()
 
     if uid not in USER_DATA:
@@ -621,6 +682,11 @@ def init_session():
 
 
 def clean_sessions(final=False):
+    """
+    Remove stale sessions
+
+    If final is True, all sessions are removed
+    """
     current_thread().name = 'Clean'
     totalcount = 0
     cleanuids = []
@@ -639,6 +705,7 @@ def clean_sessions(final=False):
 
 
 def clean_sessions_thread():
+    """ Thread to remove stale sessions """
     current_thread().name = 'Clean'
     while True:
         gevent.sleep(config.SESSIONTIMEOUT / 2)
@@ -649,6 +716,7 @@ def clean_sessions_thread():
 
 
 def get_diagram(xcos_file_id, removediagram=False):
+    """ Get diagram based on id """
     if not xcos_file_id:
         logger.warning('no id')
         return None
@@ -669,6 +737,7 @@ def get_diagram(xcos_file_id, removediagram=False):
 
 
 def add_diagram():
+    """ Add new diagram to current list of diagrams """
     (diagrams, scripts, __, __, sessiondir, diagramlock) = init_session()
 
     with diagramlock:
@@ -681,6 +750,7 @@ def add_diagram():
 
 
 def get_script(script_id, scripts=None, removescript=False):
+    """ Get script based on id """
     if script_id is None:
         return None
     if not script_id:
@@ -703,6 +773,7 @@ def get_script(script_id, scripts=None, removescript=False):
 
 
 def add_script():
+    """ Add new script to current list of scripts """
     (__, scripts, getscriptcount, __, sessiondir, __) = init_session()
 
     script_id = getscriptcount()
@@ -716,13 +787,13 @@ def add_script():
 
 
 def parse_line(line, lineno):
-    '''
+    """
     Function to parse the line
     Returns tuple of figure ID and state
     state = INITIALIZATION if new figure is created
             ENDING if current fig end
             DATA otherwise
-    '''
+    """
     line_words = line.split(' ')  # Each line is split to read condition
     try:
         # The below condition determines the block ID
@@ -749,10 +820,10 @@ def parse_line(line, lineno):
 
 
 def get_line_and_state(file, figure_list, lineno, incomplete_line):
-    '''
+    """
     Function to get a new line from file
     This also parses the line and appends new figures to figure List
-    '''
+    """
     line = file.readline()  # read line by line from log
     if not line:            # if line is empty then return noline
         return (incomplete_line, NOLINE)
@@ -787,6 +858,11 @@ LOGFILEFD = 123
 
 
 def prestart_scilab():
+    """
+    Command to prestart scilab
+
+    Remaining command is sent via standard input
+    """
     cmd = SCILAB_START
     cmdarray = [SCI,
                 "-nogui",
@@ -823,6 +899,7 @@ def prestart_scilab():
 
 
 def run_scilab(command, base, createlogfile=False, timeout=70):
+    """ Run the scilab command using a prestarted scilab instance """
     instance = get_scilab_instance()
     if instance is None:
         logger.error('cannot run command %s', command)
@@ -843,10 +920,10 @@ def run_scilab(command, base, createlogfile=False, timeout=70):
 
 
 def is_unsafe_script(filename):
-    '''
+    """
     Read file and check for system commands and return error if file contains
     system commands
-    '''
+    """
     with open(filename, 'r') as f:
         if not re.search(SYSTEM_COMMANDS, f.read()):
             return False
@@ -858,9 +935,7 @@ def is_unsafe_script(filename):
 
 @app.route('/uploadscript', methods=['POST'])
 def uploadscript():
-    '''
-    Below route is called for uploading script file.
-    '''
+    """ Below route is called for uploading script file """
     (script, sessiondir) = add_script()
 
     file = request.files['file']
@@ -901,7 +976,7 @@ def uploadscript():
 
 
 def clean_output(s):
-    '''handle whitespace and sequences in output'''
+    """ Handle whitespace and sequences in output """
     s = re.sub(r'[\a\b\f\r\v]', r'', s)
     # https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_sequences
     s = re.sub(r'\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]', r'', s)
@@ -914,9 +989,7 @@ def clean_output(s):
 
 @app.route('/getscriptoutput', methods=['POST'])
 def getscriptoutput():
-    '''
-    Below route is called for uploading script file.
-    '''
+    """ Below route is called for uploading script file """
     script = get_script(get_script_id())
     if script is None:
         # when called with same script_id again or with incorrect script_id
@@ -1021,7 +1094,7 @@ def getscriptoutput():
 
 @app.route('/stopscript', methods=['POST'])
 def kill_script(script=None):
-    '''Below route is called for stopping a running script file.'''
+    """ Below route is called for stopping a running script file """
     if script is None:
         script = get_script(get_script_id(), removescript=True)
         if script is None:
@@ -1050,7 +1123,7 @@ def kill_script(script=None):
 
 @app.route('/stopscifile')
 def kill_scifile(scifile=None):
-    '''Below route is called for stopping a running sci file.'''
+    """ Below route is called for stopping a running sci file """
     if scifile is None:
         (__, __, __, scifile, __, __) = init_session()
 
@@ -1063,9 +1136,7 @@ def kill_scifile(scifile=None):
 
 @app.route('/requestfilename')
 def sendfile():
-    '''
-    This route is used in chart.js for sending image filename
-    '''
+    """ This route is used in chart.js for sending image filename """
     diagram = get_diagram(get_request_id())
     if diagram is None:
         logger.warning('no diagram')
@@ -1078,10 +1149,10 @@ def sendfile():
 
 
 def kill_scilab_with(proc, sgnl):
-    '''
-    function to kill a process group with a signal. wait for maximum 2 seconds
-    for process to exit. return True on exit, False otherwise
-    '''
+    """
+    Function to kill a process group with a signal. Wait for maximum 2 seconds
+    for process to exit. Return True on exit, False otherwise
+    """
 
     if proc.poll() is not None:
         return True
@@ -1103,6 +1174,7 @@ def kill_scilab_with(proc, sgnl):
 
 
 def get_request_id(key='id'):
+    """ Get id from request """
     args = request.args
     if args is None:
         logger.warning('No args in request')
@@ -1121,6 +1193,7 @@ def get_request_id(key='id'):
 
 
 def get_script_id(key='script_id', default=''):
+    """ Get script id from request """
     form = request.form
     if form is None:
         logger.warning('No form in request')
@@ -1139,7 +1212,7 @@ def get_script_id(key='script_id', default=''):
 
 
 def kill_scilab(diagram=None):
-    '''Define function to kill scilab(if still running) and remove files'''
+    """ Define function to kill scilab(if still running) and remove files """
     if diagram is None:
         diagram = get_diagram(get_request_id(), True)
 
@@ -1164,9 +1237,7 @@ def kill_scilab(diagram=None):
 
 
 def list_variables(filename):
-    '''
-    add scilab commands to list only user defined variables
-    '''
+    """ Add scilab commands to list only user defined variables """
 
     command = "[__V1,__V2,__V3]=listvarinfile('%s');" % filename
     command += "__V5=grep(string(__V2),'/^([124568]|1[7])$/','r');"
@@ -1210,9 +1281,7 @@ def list_variables(filename):
 
 
 def load_variables(filename):
-    '''
-    add scilab commands to load only user defined variables
-    '''
+    """ Add scilab commands to load only user defined variables """
 
     command = "[__V1,__V2]=listvarinfile('%s');" % filename
     command += "__V5=grep(string(__V2),'/^([124568]|1[7])$/','r');"
@@ -1232,12 +1301,12 @@ def load_variables(filename):
 
 @app.route('/start_scilab')
 def start_scilab():
-    '''
-    function to execute xcos file using scilab (scilab-adv-cli), access log
+    """
+    Function to execute xcos file using scilab (scilab-adv-cli), access log
     file written by scilab
 
     This function is called in app route 'start_scilab' below
-    '''
+    """
     diagram = get_diagram(get_request_id())
     if diagram is None:
         logger.warning('no diagram')
@@ -1378,12 +1447,12 @@ def start_scilab():
 
 @flask.stream_with_context
 def event_stream():
-    '''
+    """
     Read log file and return data to eventscource function of javascript for
     displaying chart.
 
     This function is called in app route 'SendLog' below
-    '''
+    """
     diagram = get_diagram(get_request_id())
     if diagram is None:
         logger.warning('no diagram')
@@ -1471,7 +1540,7 @@ def event_stream():
 
 
 def AppendtoTKfile(diagram):
-    '''function which appends the updated (new) value to the file'''
+    """ Function which appends the updated (new) value to the file """
     starttime = diagram.tk_starttime
 
     for i in range(diagram.tk_count):
@@ -1489,13 +1558,14 @@ def AppendtoTKfile(diagram):
 
 
 def getDetailsThread(diagram):
-    '''function which makes the initialisation of thread'''
+    """ Function which makes the initialisation of thread """
     while diagram.tkbool:
         AppendtoTKfile(diagram)
         gevent.sleep(0.1)
 
 
 def stopDetailsThread(diagram):
+    """ Stop the details thread and clean up the files """
     diagram.tkbool = False  # stops the thread
     gevent.sleep(LOOK_DELAY)
     fname = join(diagram.sessiondir, VALUES_FOLDER,
@@ -1507,7 +1577,7 @@ def stopDetailsThread(diagram):
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    '''Route that will process the file upload'''
+    """ Route that will process the file upload """
     # Get the file
     file = request.files['file']
     # Check if the file is not null
@@ -1800,6 +1870,11 @@ def upload():
 
 @app.route('/filenames.php', methods=['POST'])
 def filenames():
+    """
+    Get the filenames from a directory
+
+    This is used to send filenames together, especially image files
+    """
     set_session()
     url = request.form['url']
     if url == '' or '.' in url or url[0] != '/' or url[-1] != '/':
@@ -1810,6 +1885,7 @@ def filenames():
 
 @app.route('/UpdateTKfile', methods=['POST'])
 def UpdateTKfile():
+    """ Method used to update the TK files """
     diagram = get_diagram(get_request_id())
     if diagram is None:
         logger.warning('no diagram')
@@ -1863,7 +1939,7 @@ def UpdateTKfile():
 
 @app.route('/downloadfile', methods=['POST'])
 def DownloadFile():
-    '''route for download of binary and audio'''
+    """ Route for download of binary and audio """
     fn = request.form['path']
     if fn == '' or fn[0] == '.' or '/' in fn:
         logger.warning('downloadfile=%s', fn)
@@ -1879,7 +1955,7 @@ def DownloadFile():
 
 @app.route('/deletefile', methods=['POST'])
 def DeleteFile():
-    '''route for deletion of binary and audio file'''
+    """ Route for deletion of binary and audio file """
     fn = request.form['path']
     if fn == '' or fn[0] == '.' or '/' in fn:
         logger.warning('deletefile=%s', fn)
@@ -1890,32 +1966,34 @@ def DeleteFile():
 
 @app.route('/SendLog')
 def sse_request():
-    '''Set response method to event-stream'''
+    """ Set response method to event-stream """
     return Response(event_stream(), mimetype='text/event-stream')
 
 
 @app.route('/<path:path>')
 def static_file(path):
+    """ The static pages """
     set_session()
     return app.send_static_file(path)
 
 
 @app.route('/version-<__version>/webapp/<path:path>')
 def versioned_static_file(__version, path):
+    """ The versioned pages """
     set_session()
     return app.send_static_file(path)
 
 
 @app.route('/stop')
 def stop():
-    '''route to kill scilab on closing of chart'''
+    """ Route to kill scilab on closing of chart """
     kill_scilab()
     return "done"
 
 
 @app.route('/endBlock/<fig_id>')
 def endBlock(fig_id):
-    '''route to end blocks with no Ending parameter'''
+    """ Route to end blocks with no Ending parameter """
     diagram = get_diagram(get_request_id())
     if diagram is None:
         logger.warning('no diagram')
@@ -1927,6 +2005,7 @@ def endBlock(fig_id):
 
 @app.route('/')
 def page():
+    """ The index page """
     set_session()
     version_check()
     return render_template('index.html',
@@ -1938,6 +2017,7 @@ def page():
 
 @app.route('/internal/<internal_key>', methods=['POST'])
 def internal_fun(internal_key):
+    """ Call a scilab internal function """
     (__, __, __, scifile, sessiondir, __) = init_session()
 
     if internal_key not in config.INTERNAL:
@@ -2014,6 +2094,7 @@ def internal_fun(internal_key):
 # example page start ###################
 
 def connection():
+    """ Return the database cursor """
     conn = MySQLdb.connect(host=config.DB_HOST,
                            user=config.DB_USER,
                            passwd=config.DB_PASS,
@@ -2024,6 +2105,7 @@ def connection():
 
 @cache.memoize()
 def db_query(query, parameters=None):
+    """ Run the query and cache the results """
     cur = connection()
     cur.execute(query, parameters)
     return cur.fetchall()
@@ -2031,6 +2113,7 @@ def db_query(query, parameters=None):
 
 @app.route('/example')
 def example_page():
+    """ The example page """
     set_session()
     version_check()
 
@@ -2110,6 +2193,7 @@ def example_page():
 @app.route('/exampe<s>')
 @app.route('/exampl<s>')
 def redirect_to_example_page():
+    """ Support common typos """
     set_session()
     qs = request.query_string.decode('utf-8', 'ignore')
     return flask.redirect(flask.url_for('example_page') + '?' + qs)
@@ -2117,6 +2201,7 @@ def redirect_to_example_page():
 
 @app.route('/get_book', methods=['GET', 'POST'])
 def ajax_get_book():
+    """ Get books by category id """
     set_session()
     category_id = request.args.get('catid')
     try:
@@ -2128,6 +2213,7 @@ def ajax_get_book():
 
 @app.route('/get_chapter', methods=['GET', 'POST'])
 def ajax_get_chapter():
+    """ Get chapters by book id """
     set_session()
     book_id = request.args.get('bookid')
     try:
@@ -2139,6 +2225,7 @@ def ajax_get_chapter():
 
 @app.route('/get_example', methods=['GET', 'POST'])
 def ajax_get_example():
+    """ Get examples by chapter id """
     set_session()
     chapter_id = request.args.get('chapterid')
     try:
@@ -2150,6 +2237,7 @@ def ajax_get_example():
 
 @app.route('/get_example_file', methods=['GET', 'POST'])
 def ajax_get_example_file():
+    """ Get example files by example id """
     set_session()
     example_id = request.args.get('exampleid')
     try:
@@ -2161,6 +2249,7 @@ def ajax_get_example_file():
 
 @app.route('/get_contributor_details', methods=['GET', 'POST'])
 def ajax_get_contributor_details():
+    """ Get contributor details by book id """
     set_session()
     book_id = request.args.get('book_id')
     try:
@@ -2171,10 +2260,12 @@ def ajax_get_contributor_details():
 
 
 def clean_text(s):
+    """ Handle whitespace """
     return re.sub(r'[ \t]*[\r\n]+[ \t]*', r'', s)
 
 
 def get_example_file(example_file_id):
+    """ Return the xcos file name and contents """
     filename = 'example.xcos'
     filepath = ''
     example_id = 0
@@ -2199,7 +2290,7 @@ def get_example_file(example_file_id):
 
 
 def clean_text_2(s, forindex):
-    '''handle whitespace'''
+    """ Handle whitespace """
     s = re.sub(r'[\a\b\f\r\v]', r'', s)
     s = re.sub(r'\t', r'    ', s)
     s = re.sub(r' +(\n|$)', r'\n', s)
@@ -2215,6 +2306,7 @@ def clean_text_2(s, forindex):
 
 
 def get_prerequisite_file(file_id):
+    """ Return the file name and contents by example file id """
     filename = ''
     filepath = ''
     data = db_query(config.QUERY_PREREQUISITE_FILE_BY_ID, [file_id])
@@ -2225,6 +2317,7 @@ def get_prerequisite_file(file_id):
 
 
 def get_prerequisite_file_by_example_id(example_id):
+    """ Return the file name and contents by example id """
     filename = ''
     filepath = ''
     file_id = None
@@ -2236,6 +2329,7 @@ def get_prerequisite_file_by_example_id(example_id):
 
 
 def return_prerequisite_file(filename, filepath, file_id, forindex):
+    """ Return the file name and contents """
     if file_id is None:
         return ('', filename)
 
@@ -2257,6 +2351,7 @@ def return_prerequisite_file(filename, filepath, file_id, forindex):
 
 @app.route('/example_file', methods=['GET', 'POST'])
 def download_example_file():
+    """ Download the xcos diagram """
     set_session()
     example_file_id = request.args.get('efid')
     (example_content, example_filename, __) = get_example_file(
@@ -2270,6 +2365,7 @@ def download_example_file():
 
 @app.route('/prerequisite_file', methods=['GET', 'POST'])
 def download_prerequisite_file():
+    """ Download the prerequisite file """
     set_session()
     example_file_id = request.args.get('efid')
     (prerequisite_content, prerequisite_filename) = get_prerequisite_file(
@@ -2283,6 +2379,7 @@ def download_prerequisite_file():
 
 @app.route('/open', methods=['GET', 'POST'])
 def open_example_file():
+    """ Open the xcos diagram in a new window """
     set_session()
     version_check()
     example_file_id = request.args.get('efid')
@@ -2300,6 +2397,7 @@ def open_example_file():
 
 
 def main():
+    """ The main function """
     logger.info('starting')
     version_check()
     os.chdir(SESSIONDIR)
