@@ -201,9 +201,25 @@ SCILAB_START = (
 SCILAB_END = "mode(2);quit();"
 
 USER_DATA = {}
-VERSIONED_CHECK_TIME = 0
 VERSIONED_LOCK = RLock()
 VERSIONED_FILES_MTIME = {}
+
+
+class VersionedCheckTime:
+    """ For Check Time of Version """
+
+    nexttime = 0
+
+    def settime(self, nexttime):
+        """ Set the time """
+        self.nexttime = nexttime
+
+    def gettime(self):
+        """ Get the time """
+        return self.nexttime
+
+
+VERSIONED_CHECK_TIME = VersionedCheckTime()
 
 
 def version_check():
@@ -211,16 +227,15 @@ def version_check():
     Check if the files have been modified every VERSIONED_CHECK_INTERVAL
     seconds
     """
-    global VERSIONED_CHECK_TIME
-
     modified = False
 
-    if time() > VERSIONED_CHECK_TIME:
+    if time() > VERSIONED_CHECK_TIME.gettime():
         with VERSIONED_LOCK:
-            if time() > VERSIONED_CHECK_TIME:
+            if time() > VERSIONED_CHECK_TIME.gettime():
                 reload(config)
                 modified = is_versioned_file_modified()
-                VERSIONED_CHECK_TIME = time() + config.VERSIONED_CHECK_INTERVAL
+                VERSIONED_CHECK_TIME.settime(time() +
+                                             config.VERSIONED_CHECK_INTERVAL)
 
     return modified
 
@@ -301,7 +316,20 @@ def print_scilab_instances():
     logger.info('instance count: %s', msg[2:])
 
 
-FIRST_INSTANCE = True
+class FirstInstance:
+    """ First instance of scilab """
+    firstinstance = True
+
+    def setflag(self, flag):
+        """ Set the flag """
+        self.firstinstance = flag
+
+    def issetflag(self):
+        """ Return the flag """
+        return self.firstinstance
+
+
+FIRST_INSTANCE = FirstInstance()
 
 
 def prestart_scilab_instances():
@@ -310,8 +338,6 @@ def prestart_scilab_instances():
 
     Prestarted scilab instances are kept in INSTANCES_1
     """
-    global FIRST_INSTANCE
-
     current_thread().name = 'PreStart'
 
     attempt = 1
@@ -327,7 +353,7 @@ def prestart_scilab_instances():
                 gevent.thread.interrupt_main()
                 return
 
-            if FIRST_INSTANCE:
+            if FIRST_INSTANCE.issetflag():
                 gevent.sleep(1)
                 for i in range(2, 4):
                     if proc.poll() is not None:
@@ -364,12 +390,12 @@ def prestart_scilab_instances():
                              attempt, msg, returncode)
                 gevent.sleep(config.SCILAB_INSTANCE_RETRY_INTERVAL * attempt)
                 attempt += 1
-                FIRST_INSTANCE = True
+                FIRST_INSTANCE.setflag(True)
                 continue
 
             INSTANCES_1.append(instance)
             attempt = 1
-            FIRST_INSTANCE = False
+            FIRST_INSTANCE.setflag(False)
 
         print_scilab_instances()
 
@@ -383,8 +409,6 @@ def get_scilab_instance():
 
     That instance is moved from INSTANCES_1 to INSTANCES_2
     """
-    global FIRST_INSTANCE
-
     try:
         while True:
             instance = INSTANCES_1.pop(0)
@@ -392,7 +416,7 @@ def get_scilab_instance():
             if proc.poll() is not None:
                 logger.warning('scilab instance exited: return code is %s',
                                proc.returncode)
-                FIRST_INSTANCE = True
+                FIRST_INSTANCE.setflag(True)
                 if not too_many_scilab_instances():
                     EVT.set()
                     if no_free_scilab_instance():
