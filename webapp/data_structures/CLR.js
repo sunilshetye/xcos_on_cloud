@@ -32,17 +32,19 @@ function CLR() {
         return options
     }
     CLR.prototype.set = function CLR() {
-        this.num = inversepolynomial(arguments[0]["num"])
-        this.den = inversepolynomial(arguments[0]["den"])
-	this.value = cont_frm(this.num,this.den);
+        var num = inversepolynomial(arguments[0]["num"])
+        var den = inversepolynomial(arguments[0]["den"])
+        var value = cont_frm(num1,den1);
+        this.num = arguments[0]["num"]
+        this.den = arguments[0]["den"]
 	var model = scicos_model();
         model.sim = list(new ScilabString(["csslti4"]), new ScilabDouble([4]));
         model.in = new ScilabDouble([1]);
         model.out = new ScilabDouble([1]);
         model.state = new ScilabDouble([this.x0]);
-        model.rpar = new ScilabDouble(...this.value);
+        model.rpar = new ScilabDouble(...value);
         model.dep_ut = new ScilabBoolean([false, true]);
-        var exprs = new ScilabString([this.num.toString()], [this.den.toString()]);
+        var exprs = new ScilabString([num1], [den1]);
         this.displayParameter = [[this.num], [this.den]];
         var gr_i = [];
         this.x = new standard_define(new ScilabDouble([3, 2]), model, exprs, gr_i);

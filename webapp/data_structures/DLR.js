@@ -35,8 +35,10 @@ function DLR() {
         return options
     }
     DLR.prototype.set=function DLR(){
-        this.num = inversepolynomial(arguments[0]["num"])
-        this.den = inversepolynomial(arguments[0]["den"])
+        var num1 = inversepolynomial(arguments[0]["num"])
+        var den1 = inversepolynomial(arguments[0]["den"])
+        this.num = arguments[0]["num"]
+        this.den = arguments[0]["den"]
         var a=[];
         var b=[];
         var j=0;
@@ -127,12 +129,12 @@ function DLR() {
             alert("Transfer function must be proper");
             throw "incorrect";
         }
-        this.value = cont_frm(this.num,this.den);
-        var exprs = new ScilabString([this.num.toString()],[this.den.toString()])
+        var value = cont_frm(this.num,this.den);
+        var exprs = new ScilabString([this.num],[this.den])
         this.x.graphics.exprs = exprs
         var ns = size(this.A,1);
         var ns1 = size(this.A,2);
-	this.x.model.rpar = new ScilabDouble(...this.value);
+        this.x.model.rpar = new ScilabDouble(...value);
         //if ns1<=ns then
             //x0=x0(1:ns1)
         //else
